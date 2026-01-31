@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./services/backend
+    ports:
+      - "8000:8000"
+    environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+    volumes:
+      - ./services/backend:/app
+    restart: always
+
+  frontend:
+    build:
+      context: ./services/frontend
+    ports:
+      - "8501:8501"
+    environment:
+      - BACKEND_URL=http://backend:8000
+    volumes:
+      - ./services/frontend:/app
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  video_data:
