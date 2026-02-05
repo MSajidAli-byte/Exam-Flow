@@ -1,9 +1,8 @@
 fastapi
 uvicorn
 google-generativeai
-mediapipe
 opencv-python-headless
 python-multipart
 pydantic-settings
-moviepy
 python-dotenv
+numpy

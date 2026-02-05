@@ -63,15 +63,37 @@ docker-compose up -d
 # Backend API: http://localhost:8000
 ```
 
-### Option 2: Local Development
+### Option 2: Local Development (Manual Setup)
 
-```bash
-# Backend
+If you prefer not to use Docker, follow these steps to set up a Python virtual environment:
+
+#### 1. Create a Virtual Environment
+
+From the project root directory, run:
+
+```powershell
+# Create the environment
+python -m venv venv
+
+# Activate it (Windows)
+.\venv\Scripts\activate
+
+# Activate it (Linux/Mac)
+source venv/bin/activate
+```
+
+#### 2. Install & Start Backend
+
+```powershell
 cd services/backend
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
+```
 
-# Frontend (new terminal)
+#### 3. Install & Start Frontend (New Terminal)
+
+```powershell
+# Remember to activate the venv in the new terminal too!
 cd services/frontend
 pip install -r requirements.txt
 streamlit run app.py
