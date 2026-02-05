@@ -13,34 +13,372 @@ st.set_page_config(
     layout="wide"
 )
 
+def get_override():
+    if st.session_state.get('manual_controls', {}).get('enabled'):
+        return {
+            'score': st.session_state['manual_controls']['score'],
+            'integrity': st.session_state['manual_controls']['integrity'],
+            'notes': st.session_state['manual_controls']['notes'],
+            'reviewer': 'Manual Review'
+        }
+    return None
+
+def update_result_with_override(result):
+    override = get_override()
+    if override:
+        result['manual_override'] = override
+    return result
+
+# Sidebar: Manual Review Panel
+with st.sidebar:
+    st.header("🛠️ Manual Review Panel")
+    st.markdown("*Override AI decisions when needed*")
+    
+    # Initialize session state for manual controls
+    if 'manual_controls' not in st.session_state:
+        st.session_state['manual_controls'] = {
+            'enabled': False,
+            'score': 50,
+            'integrity': 'Verified',
+            'notes': ''
+        }
+    
+    enable_override = st.checkbox(
+        "Enable Manual Override",
+        value=st.session_state['manual_controls']['enabled'],
+        help="Check to activate manual review controls"
+    )
+    
+    if enable_override:
+        manual_score = st.slider(
+            "Final Score Override", 
+            0, 100, 
+            st.session_state['manual_controls']['score'],
+            help="Adjust AI-generated score"
+        )
+        
+        integrity_verdict = st.selectbox(
+            "Integrity Assessment",
+            ["Verified", "Suspicious", "Failed"],
+            index=["Verified", "Suspicious", "Failed"].index(st.session_state['manual_controls']['integrity']),
+            help="Overall integrity verdict"
+        )
+        
+        reviewer_notes = st.text_area(
+            "Reviewer Justification",
+            value=st.session_state['manual_controls']['notes'],
+            placeholder="Explain the reason for manual adjustments...",
+            height=100,
+            help="Press Ctrl+Enter to save text changes"
+        )
+        
+        # Save to session state
+        st.session_state['manual_controls'] = {
+            'enabled': True,
+            'score': manual_score,
+            'integrity': integrity_verdict,
+            'notes': reviewer_notes
+        }
+        
+        # NEW: Apply Button to sync with existing result
+        if st.button("🔄 Apply & Update Report"):
+            if 'result' in st.session_state:
+                # Update the manual_override in the existing result
+                st.session_state['result']['manual_override'] = {
+                    'score': manual_score,
+                    'integrity': integrity_verdict,
+                    'notes': reviewer_notes,
+                    'reviewer': 'Manual Review'
+                }
+                st.success("✅ Report synchronized with manual changes!")
+                st.rerun()
+            else:
+                st.warning("⚠️ Analyze a video first before applying overrides.")
+        
+        st.info(f"✅ Current Stage: **{manual_score}/100** ({integrity_verdict})")
+    else:
+        st.session_state['manual_controls']['enabled'] = False
+        # Remove override from result if disabled
+        if 'result' in st.session_state and 'manual_override' in st.session_state['result']:
+            if st.button("❌ Remove Override"):
+                del st.session_state['result']['manual_override']
+                st.rerun()
+    
+    st.markdown("---")
+    st.markdown("### 📊 System Status")
+    st.success("🟢 Backend: Online")
+    st.info("🔵 AI Model: Gemini 2.0 Flash")
+
 st.title("🎓 Exam-Flow AI Assistant")
+st.markdown("**Professional AI-Powered Assessment & Proctoring Platform**")
 st.markdown("---")
 
+# Main Layout: Upload/Controls on Left, Results on Right
 col1, col2 = st.columns([1, 1])
 
+@st.cache_data(show_spinner=False)
+def fetch_analysis(endpoint, params=None, files=None):
+    """Cached function to fetch analysis from backend."""
+    try:
+        if files:
+            response = requests.post(f"{BACKEND_URL}/{endpoint}", params=params, files=files)
+        else:
+            response = requests.get(f"{BACKEND_URL}/{endpoint}")
+            
+        if response.status_code == 200:
+            return response.json()
+        else:
+            st.error(f"Backend Error ({response.status_code}): {response.text}")
+            return None
+    except Exception as e:
+        st.error(f"Connection failed: {e}")
+        return None
+
+def get_current_override():
+    """Gets current manual override settings from session state."""
+    if st.session_state.get('manual_controls', {}).get('enabled'):
+        return {
+            'score': st.session_state['manual_controls']['score'],
+            'integrity': st.session_state['manual_controls']['integrity'],
+            'notes': st.session_state['manual_controls']['notes'],
+            'reviewer': 'Manual Review'
+        }
+    return None
+
 with col1:
-    st.header("📤 Upload Assessment")
-    uploaded_file = st.file_uploader("Upload Zoom Recording (MP4)", type=["mp4", "mov", "avi"])
+    st.header("📤 Assessment Portal")
+    
+    # Assessment Type Selector
+    assessment_type = st.selectbox(
+        "Select Assessment Type", 
+        ["Python", "Java", "Docker", "General"],
+        help="Determines the grading rubric and technical criteria."
+    )
+    
+    # Video Upload
+    uploaded_file = st.file_uploader("Upload Recording (MP4, MOV, AVI)", type=["mp4", "mov", "avi"])
     
     if uploaded_file is not None:
         st.video(uploaded_file)
-        if st.button("🚀 Start AI Grading"):
-            with st.spinner("Analyzing Video & Behavior..."):
-                # Placeholder for backend call
-                # files = {"file": uploaded_file.getvalue()}
-                # response = requests.post(f"{BACKEND_URL}/upload-video", files=files)
-                st.success("Analysis Complete! (Mock)")
+        
+        if st.button("🚀 Analyze Uploaded Video"):
+            with st.spinner(f"AI is analyzing video... This may take a minute."):
+                files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
+                params = {"assessment_type": assessment_type}
+                
+                # Fetch fresh analysis (direct call for uploads to ensure quality)
+                try:
+                    response = requests.post(f"{BACKEND_URL}/analyze-video", params=params, files=files)
+                    if response.status_code == 200:
+                        result = response.json()
+                        st.session_state['result'] = result
+                        st.session_state['result_source'] = "Upload"
+                        st.session_state['video_file'] = uploaded_file
+                        st.success("✅ AI Technical Analysis Complete!")
+                    else:
+                        st.error(f"Error: {response.text}")
+                except Exception as e:
+                    st.error(f"Connection failed: {e}")
+
+    st.markdown("---")
+    st.subheader("🧪 Demo Samples")
+    st.info("Test-drive the AI with pre-verified clips")
+
+    demo_col1, demo_col2 = st.columns(2)
+
+    if demo_col1.button("🐳 Docker Demo"):
+        with st.spinner("Loading Docker Analysis..."):
+            result = fetch_analysis("analyze-demo/docker")
+            if result:
+                st.session_state['result'] = result
+                st.session_state['result_source'] = "Docker Demo"
+                st.success("✅ Demo Analysis Loaded!")
+
+    if demo_col2.button("☕ Java Demo"):
+        with st.spinner("Loading Java Analysis..."):
+            result = fetch_analysis("analyze-demo/java")
+            if result:
+                st.session_state['result'] = result
+                st.session_state['result_source'] = "Java Demo"
+                st.success("✅ Demo Analysis Loaded!")
 
 with col2:
-    st.header("📊 AI Insights")
-    st.info("Upload a video to see real-time grading and proctoring reports.")
+    st.header("📊 Multi-Modal Analysis")
     
-    # Mock data for demonstration
-    if uploaded_file:
-        st.subheader("Behavioral Flags")
-        st.error("⚠️ 02:15 - Looking away from screen")
-        st.warning("⚠️ 04:30 - Background noise detected")
+    if 'result' in st.session_state:
+        result = st.session_state['result']
+        source = st.session_state.get('result_source', 'Analysis')
         
-        st.subheader("Technical Grade")
-        st.success("✅ Docker configuration: 10/10")
-        st.success("✅ Java Error Resolution: 9/10")
+        # Header with Key Stats
+        st.subheader(f"📋 Verdict: {source}")
+        
+        # Score Comparison metrics
+        ai_score = 0
+        import re
+        score_match = re.search(r'(\d+)/100', result['report'])
+        if score_match:
+            ai_score = int(score_match.group(1))
+            
+        metric_col1, metric_col2, metric_col3 = st.columns(3)
+        metric_col1.metric("AI Technical Score", f"{ai_score}/100")
+        
+        if 'manual_override' in result:
+            override = result['manual_override']
+            metric_col2.metric("Management Score", f"{override['score']}/100", delta=int(override['score']-ai_score) if override['score'] != ai_score else None)
+            metric_col3.metric("Integrity Status", override.get('integrity', 'Verified'))
+            
+            st.info(f"🖋️ **Reviewer Note:** {override['notes']}")
+        else:
+            metric_col2.metric("Management Score", f"{ai_score}/100")
+            metric_col3.metric("Integrity Status", "AI Default")
+        
+        st.markdown("---")
+        
+        # Tabs for better organization
+        tab1, tab2 = st.tabs(["📝 AI Detailed Report", "🚨 Behavioral Proctoring"])
+        
+        with tab1:
+            # Automatic Risk Detection
+            if "Verdict: FAIL" in result['report'] or "Verdict: FAIL" in result['report'].upper():
+                st.error("🚨 **CRITICAL RISK**: AI Investigation has flagged this session for an Integrity Breach.")
+            elif "Verdict: SUSPICIOUS" in result['report'] or "Verdict: SUSPICIOUS" in result['report'].upper():
+                st.warning("⚠️ **INVESTIGATION RECOMMENDED**: AI has flagged suspicious activity.")
+            
+            st.markdown(result['report'])
+        
+        with tab2:
+            behavioral_flags = result.get('behavioral_flags', [])
+            
+            if behavioral_flags:
+                # Filter out the generic "No anomalies" message for a cleaner UI if there are actual flags
+                actual_flags = [f for f in behavioral_flags if "No behavioral anomalies detected" not in f['issue']]
+                
+                if actual_flags:
+                    st.warning(f"**{len(actual_flags)} suspicious event(s) identified**")
+                    for flag in actual_flags:
+                        severity_color = "red" if flag['severity'] == "High" else "orange" if flag['severity'] == "Medium" else "blue"
+                        st.markdown(f"**{flag['timestamp']}** : :{severity_color}[{flag['issue']}] ({flag['severity']})")
+                else:
+                    st.success("✅ **Proctoring Pass**: No significant behavioral anomalies detected during code execution.")
+                    # Show info-level messages like "Screen-only"
+                    for flag in behavioral_flags:
+                        if flag['severity'] == "Info":
+                            st.info(f"ℹ️ {flag['issue']}")
+            else:
+                st.info("No behavioral data available for this session.")
+        
+        # PDF Download
+        st.markdown("---")
+        if st.button("📄 Export Final Technical Report (PDF)"):
+            from fpdf import FPDF
+            from datetime import datetime
+            import textwrap
+            
+            class PDF(FPDF):
+                def header(self):
+                    self.set_fill_color(240, 240, 240)
+                    self.rect(0, 0, 210, 20, 'F')
+                    self.set_font('Arial', 'B', 15)
+                    self.cell(0, 10, 'Exam-Flow Assessment Intelligence', 0, 1, 'C')
+                    self.ln(5)
+                def footer(self):
+                    self.set_y(-15)
+                    self.set_font('Arial', 'I', 8)
+                    self.cell(0, 10, f'Professional AI Proctoring Report - Page {self.page_no()}', 0, 0, 'C')
+            
+            pdf = PDF()
+            pdf.set_left_margin(15)
+            pdf.set_right_margin(15)
+            pdf.add_page()
+            
+            effective_width = pdf.w - pdf.l_margin - pdf.r_margin
+            res_type = result.get('type') or result.get('demo') or "General"
+            
+            # --- PROFESSIONAL METADATA ---
+            pdf.set_font("Arial", "B", 10)
+            pdf.cell(effective_width/2, 6, f"Assessment: {res_type.upper()}")
+            pdf.set_font("Arial", "", 10)
+            pdf.cell(effective_width/2, 6, f"Date: {datetime.now().strftime('%Y-%m-%d')}", ln=True, align='R')
+            pdf.ln(5)
+            
+            # --- HYBRID SCORE SECTION ---
+            if 'manual_override' in result:
+                override = result['manual_override']
+                pdf.set_fill_color(255, 230, 230)
+                pdf.rect(15, pdf.get_y(), effective_width, 25, 'F')
+                pdf.set_font("Arial", "B", 12)
+                pdf.set_text_color(200, 0, 0)
+                pdf.set_xy(20, pdf.get_y() + 2)
+                pdf.cell(0, 6, f"FINAL MANAGEMENT SCORE: {override['score']}/100", ln=True)
+                pdf.set_font("Arial", "B", 10)
+                pdf.set_text_color(0, 0, 0)
+                pdf.set_x(20)
+                pdf.cell(0, 6, f"Integrity Verdict: {override.get('integrity', 'Verified')}", ln=True)
+                pdf.set_font("Arial", "I", 9)
+                pdf.set_x(20)
+                pdf.multi_cell(effective_width-10, 5, f"Justification: {override['notes']}")
+                pdf.set_text_color(0, 0, 0)
+                pdf.ln(10)
+            else:
+                pdf.set_font("Arial", "B", 12)
+                pdf.cell(0, 10, f"AI Technical Score: {ai_score}/100", ln=True)
+                pdf.ln(5)
+            
+            pdf.set_font("Arial", "B", 12)
+            pdf.cell(0, 8, "AI Grading Analysis", ln=True)
+            pdf.set_font("Arial", "", 9)
+            pdf.ln(2)
+            
+            # Clean markdown
+            report_text = result['report'].replace('#', '').replace('**', '').replace('*', '')
+            
+            for line in report_text.split('\n'):
+                line = line.strip()
+                if not line:
+                    pdf.ln(3)
+                    continue
+                
+                # Sanitize for Latin-1
+                safe_line = ''.join(c if ord(c) < 256 else '?' for c in line)
+                
+                # Reset X position and use explicit width
+                pdf.set_x(pdf.l_margin)
+                
+                # Use explicit width instead of 0
+                try:
+                    pdf.multi_cell(effective_width, 5, safe_line)
+                except Exception as e:
+                    # Fallback to simple cell if multi_cell fails
+                    pdf.set_x(pdf.l_margin)
+                    pdf.cell(effective_width, 5, safe_line[:100] + "...", ln=True)
+            
+            pdf.ln(5)
+            pdf.set_font("Arial", "B", 12)
+            pdf.cell(0, 8, "Behavioral Analysis", ln=True)
+            pdf.set_font("Arial", "", 9)
+            pdf.ln(2)
+            
+            for flag in result.get('behavioral_flags', []):
+                flag_text = f"[{flag['timestamp']}] {flag['issue']} (Severity: {flag['severity']})"
+                safe_flag = ''.join(c if ord(c) < 256 else '?' for c in flag_text)
+                
+                # Reset X and use explicit width
+                pdf.set_x(pdf.l_margin)
+                try:
+                    pdf.multi_cell(effective_width, 5, safe_flag)
+                except:
+                    pdf.set_x(pdf.l_margin)
+                    pdf.cell(effective_width, 5, safe_flag[:100], ln=True)
+            
+            # Get PDF as bytes (not bytearray) for Streamlit
+            pdf_output = pdf.output(dest='S')
+            pdf_bytes = bytes(pdf_output)  # Convert bytearray to bytes
+            
+            st.download_button(
+                label="⬇️ Click to Download",
+                data=pdf_bytes,
+                file_name=f"report_{res_type.lower()}.pdf",
+                mime="application/pdf"
+            )
+    else:
+        st.info("Choose a language and upload a video, or run a demo above.")

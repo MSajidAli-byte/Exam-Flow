@@ -1,0 +1,12 @@
+venv
+.git
+.env
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.db
+.sqlite
+screenshots/
+uploads/
+available_models.txt

@@ -1,11 +1,14 @@
-FROM python:3.10-slim
+FROM python:3.10
 
 WORKDIR /app
 
 # Install system dependencies for OpenCV and MediaPipe
 RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
+    libgl1 \
     libglib2.0-0 \
+    build-essential \
+    libstdc++6 \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

@@ -2,10 +2,18 @@ from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
+from ai_grader import AIGrader
+from proctor import ProctorEngine
 
 load_dotenv()
 
 app = FastAPI(title="Exam-Flow AI Backend")
+
+# Initialize AI Services
+# In a real app, you'd manage these as dependencies or singletons
+api_key = os.getenv("GOOGLE_API_KEY")
+grader = AIGrader(api_key) if api_key else None
+proctor = ProctorEngine()
 
 # Configure CORS
 app.add_middleware(
@@ -22,8 +30,96 @@ async def root():
 
 @app.post("/upload-video")
 async def upload_video(file: UploadFile = File(...)):
-    # Placeholder for video processing logic
-    return {"filename": file.filename, "status": "received"}
+    # Save the file locally first
+    upload_dir = "uploads"
+    os.makedirs(upload_dir, exist_ok=True)
+    file_path = os.path.join(upload_dir, file.filename)
+    
+    with open(file_path, "wb") as buffer:
+        content = await file.read()
+        buffer.write(content)
+        
+    return {"filename": file.filename, "status": "received", "path": file_path}
+
+@app.get("/analyze-demo/{demo_type}")
+async def analyze_demo(demo_type: str):
+    """
+    Analyzes one of the local demo videos.
+    """
+    if not grader:
+        raise HTTPException(status_code=500, detail="GOOGLE_API_KEY not configured")
+
+    if os.path.exists("/project_root"):
+        project_root = "/project_root"
+    else:
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(os.path.dirname(current_dir))
+    
+    rubrics = {
+        "java": "1. Correct Java Syntax. 2. Implementation of a recursive factorial. 3. Successful execution in console.",
+        "docker": "1. Use of basic Docker commands (ps, start, stop). 2. Correct Container ID usage. 3. Successful container lifecycle management.",
+        "python": "1. Correct Python 3 syntax. 2. Use of PEP 8 naming conventions. 3. Proper use of functions or classes.",
+        "general": "1. Logical problem solving. 2. Code readability and comments. 3. Final output accuracy."
+    }
+
+    if demo_type == "java":
+        video_path = os.path.join(project_root, "Java_Demo_Exam-Flow.mp4")
+    elif demo_type == "docker":
+        video_path = os.path.join(project_root, "docker_demo-Exam-Flow.mp4")
+    else:
+        raise HTTPException(status_code=400, detail="Invalid demo type")
+
+    if not os.path.exists(video_path):
+        raise HTTPException(status_code=404, detail=f"Video not found at {video_path}")
+
+    behavioral_flags = proctor.analyze_behavior(video_path)
+    report = grader.grade_video(video_path, rubrics.get(demo_type, rubrics["general"]), behavioral_flags=behavioral_flags)
+
+    return {
+        "demo": demo_type,
+        "report": report,
+        "behavioral_flags": behavioral_flags
+    }
+
+@app.post("/analyze-video")
+async def analyze_video_v2(assessment_type: str, file: UploadFile = File(...)):
+    """
+    Analyzes an uploaded video based on the selected assessment type.
+    """
+    if not grader:
+        raise HTTPException(status_code=500, detail="GOOGLE_API_KEY not configured")
+
+    # Save the file locally
+    upload_dir = "uploads"
+    os.makedirs(upload_dir, exist_ok=True)
+    file_path = os.path.join(upload_dir, file.filename)
+    
+    with open(file_path, "wb") as buffer:
+        content = await file.read()
+        buffer.write(content)
+
+    # Define rubrics
+    rubrics = {
+        "Java": "1. Correct Java Syntax. 2. Logical implementation. 3. Execution output.",
+        "Docker": "1. Proper CLI usage. 2. Container management. 3. Dockerfile best practices.",
+        "Python": "1. Python 3.x compatibility. 2. Idiomatic code (List comprehensions, proper imports). 3. Error handling.",
+        "General": "1. Overall code structure. 2. Clarity and comments. 3. Problem solving approach."
+    }
+    
+    rubric = rubrics.get(assessment_type, rubrics["General"])
+
+    # Run Analysis
+    try:
+        behavioral_flags = proctor.analyze_behavior(file_path)
+        report = grader.grade_video(file_path, rubric, behavioral_flags=behavioral_flags)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return {
+        "type": assessment_type,
+        "report": report,
+        "behavioral_flags": behavioral_flags
+    }
 
 @app.get("/health")
 async def health_check():
