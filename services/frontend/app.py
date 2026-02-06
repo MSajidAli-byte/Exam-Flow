@@ -150,10 +150,29 @@ with col1:
     
     # Assessment Type Selector
     assessment_type = st.selectbox(
-        "Select Assessment Type", 
-        ["Python", "Java", "Docker", "General"],
+        "Select Role/Stack", 
+        ["Python", "Java", "Docker", "General", "Custom"],
         help="Determines the grading rubric and technical criteria."
     )
+    
+    # Custom Rubric Input
+    default_rubrics = {
+        "Python": "1. Python 3.x compatibility. 2. Idiomatic code. 3. Error handling.",
+        "Java": "1. Correct Java Syntax. 2. Logical implementation. 3. Execution output.",
+        "Docker": "1. Proper CLI usage. 2. Container management. 3. Dockerfile best practices.",
+        "General": "1. Overall code structure. 2. Clarity and comments.",
+        "Custom": "Enter your custom grading criteria here..."
+    }
+    
+    custom_rubric = st.text_area(
+        "Grading Rubric", 
+        value=default_rubrics.get(assessment_type, ""),
+        height=100,
+        help="The AI will use this exact criteria to grade the video."
+    )
+
+    # Proctoring Toggle
+    enable_proctoring = st.checkbox("Enable Behavioral Proctoring", value=True, help="If disabled, AI will ignore gaze/face detection and only focus on technical grading.")
     
     # Video Upload
     uploaded_file = st.file_uploader("Upload Recording (MP4, MOV, AVI)", type=["mp4", "mov", "avi"])
@@ -164,11 +183,15 @@ with col1:
         if st.button("🚀 Analyze Uploaded Video"):
             with st.spinner(f"AI is analyzing video... This may take a minute."):
                 files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
-                params = {"assessment_type": assessment_type}
-                
                 # Fetch fresh analysis (direct call for uploads to ensure quality)
                 try:
+                    params = {
+                        "assessment_type": assessment_type,
+                        "custom_rubric": custom_rubric,
+                        "enable_proctoring": enable_proctoring
+                    }
                     response = requests.post(f"{BACKEND_URL}/analyze-video", params=params, files=files)
+                    
                     if response.status_code == 200:
                         result = response.json()
                         st.session_state['result'] = result

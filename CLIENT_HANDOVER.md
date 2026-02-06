@@ -34,12 +34,11 @@
 - **Timeline view**: Chronological map of behavioral red flags.
 - **Branded PDF Export**: Professional downloadable reports with "Management Verdict" overlays.
 
-### 4. **Behavioral Proctoring**
+### 4. **Adaptive Assessment Controls (New)**
 
-- Face detection with **eyeglasses support**
-- Gaze tracking with **90%+ confidence threshold**
-- Prolonged absence detection (6+ seconds)
-- Screen activity monitoring
+- **Custom Dynamic Rubrics**: A new text field in the portal allows you to enter specific interview questions and grading criteria manually. The AI will adapt its evaluation to your exact technical requirements.
+- **Proctoring Toggle**: You can now enable or disable behavioral tracking (eye/face detection) with a single click in the dashboard, allowing you to focus purely on code grading when preferred.
+- **Eyeglasses Support**: Enhanced OpenCV logic now correctly handles candidates wearing glasses during proctoring sessions.
 
 ---
 

@@ -60,15 +60,21 @@ class AIGrader:
             video_file = self.upload_to_gemini(video_path, mime_type="video/mp4")
             self.wait_for_files_active([video_file])
 
-            # Format CV flags for the prompt
+            # Determine if proctoring is enabled
+            proctoring_enabled = behavioral_flags is not None and len(behavioral_flags) > 0
+            
+            # Format CV flags for the prompt (only if proctoring is enabled)
             cv_context = ""
-            if behavioral_flags:
+            if proctoring_enabled:
                 cv_context = "\n**COMPUTER VISION FORENSIC FLAGS:**\n"
                 for flag in behavioral_flags:
                     if flag['severity'] != 'Info':
                         cv_context += f"- [{flag['timestamp']}] {flag['issue']} (Severity: {flag['severity']})\n"
 
-            prompt = f"""
+            # Build dynamic prompt based on proctoring mode
+            if proctoring_enabled:
+                # STRICT MODE: Integrity-first scoring with behavioral analysis
+                prompt = f"""
 You are an ELITE ACADEMIC PROCTOR and SENIOR TECHNICAL INVESTIGATOR. Your primary goal is to verify the INDEPENDENT production of work.
 
 {cv_context}
@@ -116,7 +122,43 @@ Example: 00:45 - High-level logic suddenly appeared - SUSPICION: Plagiarism/Past
 
 **VERDICT JUSTIFICATION:**
 [A strong, clear explanation of why this score was given. If plagiarism was found, explicitly state that the score was capped due to integrity failure.]
-            """
+                """
+            else:
+                # TECHNICAL-ONLY MODE: Pure code grading without behavioral analysis
+                prompt = f"""
+You are a Senior Technical Interviewer evaluating a candidate's coding performance based solely on the technical quality of their work.
+
+**IMPORTANT**: Behavioral proctoring has been DISABLED for this assessment. Do NOT analyze gaze, face detection, or copy-paste behavior. Focus ONLY on the technical rubric below.
+
+**GRADING RUBRIC:**
+{rubric}
+
+**ANALYSIS TASKS:**
+1. Watch the video and evaluate the candidate's technical approach.
+2. Assess the final code quality, logic, and adherence to the rubric.
+3. Provide specific timestamps for key technical milestones.
+4. Give a score from 0-100 based purely on technical merit.
+
+**OUTPUT FORMAT:**
+
+### 📝 Technical Assessment Report
+**Status:** [Complete / Incomplete]
+
+### 📋 Executive Summary
+[Brief overview of the candidate's technical performance]
+
+### 🕒 Detailed Timeline
+[Chronological log with MM:SS timestamps of key technical events]
+
+### 📊 Rubric Evaluation
+[Item-by-item assessment based on the provided rubric]
+
+### 🏆 Final Technical Score
+**X/100**
+
+### 🖋️ Justification
+[Detailed explanation of the score based on technical merit only]
+                """
 
             # Dynamic Fallback Loop
             tried_models = []

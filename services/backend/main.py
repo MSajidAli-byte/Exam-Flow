@@ -82,9 +82,14 @@ async def analyze_demo(demo_type: str):
     }
 
 @app.post("/analyze-video")
-async def analyze_video_v2(assessment_type: str, file: UploadFile = File(...)):
+async def analyze_video_v2(
+    assessment_type: str, 
+    custom_rubric: str = None, 
+    enable_proctoring: bool = True,
+    file: UploadFile = File(...)
+):
     """
-    Analyzes an uploaded video based on the selected assessment type.
+    Analyzes an uploaded video based on the selected assessment type and optional custom rubric.
     """
     if not grader:
         raise HTTPException(status_code=500, detail="GOOGLE_API_KEY not configured")
@@ -98,27 +103,33 @@ async def analyze_video_v2(assessment_type: str, file: UploadFile = File(...)):
         content = await file.read()
         buffer.write(content)
 
-    # Define rubrics
-    rubrics = {
-        "Java": "1. Correct Java Syntax. 2. Logical implementation. 3. Execution output.",
-        "Docker": "1. Proper CLI usage. 2. Container management. 3. Dockerfile best practices.",
-        "Python": "1. Python 3.x compatibility. 2. Idiomatic code (List comprehensions, proper imports). 3. Error handling.",
-        "General": "1. Overall code structure. 2. Clarity and comments. 3. Problem solving approach."
-    }
-    
-    rubric = rubrics.get(assessment_type, rubrics["General"])
+    # Use custom rubric if provided, otherwise fallback to defaults
+    rubric = custom_rubric
+    if not rubric or rubric.strip() == "" or "Enter your custom" in rubric:
+        rubrics = {
+            "Java": "1. Correct Java Syntax. 2. Logical implementation. 3. Execution output.",
+            "Docker": "1. Proper CLI usage. 2. Container management. 3. Dockerfile best practices.",
+            "Python": "1. Python 3.x compatibility. 2. Idiomatic code (List comprehensions, proper imports). 3. Error handling.",
+            "General": "1. Overall code structure. 2. Clarity and comments. 3. Problem solving approach."
+        }
+        rubric = rubrics.get(assessment_type, rubrics["General"])
 
     # Run Analysis
     try:
-        behavioral_flags = proctor.analyze_behavior(file_path)
-        report = grader.grade_video(file_path, rubric, behavioral_flags=behavioral_flags)
+        behavioral_flags = []
+        if enable_proctoring:
+            behavioral_flags = proctor.analyze_behavior(file_path)
+        
+        # Grade with CV flags if enabled, otherwise just grade the video
+        report = grader.grade_video(file_path, rubric, behavioral_flags=behavioral_flags if enable_proctoring else None)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
     return {
         "type": assessment_type,
         "report": report,
-        "behavioral_flags": behavioral_flags
+        "behavioral_flags": behavioral_flags,
+        "proctoring_enabled": enable_proctoring
     }
 
 @app.get("/health")
