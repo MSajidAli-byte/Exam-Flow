@@ -156,19 +156,20 @@ with col1:
     )
     
     # Custom Rubric Input
-    default_rubrics = {
-        "Python": "1. Python 3.x compatibility. 2. Idiomatic code. 3. Error handling.",
-        "Java": "1. Correct Java Syntax. 2. Logical implementation. 3. Execution output.",
-        "Docker": "1. Proper CLI usage. 2. Container management. 3. Dockerfile best practices.",
-        "General": "1. Overall code structure. 2. Clarity and comments.",
+    rubric_placeholders = {
+        "Python": "Default: Python 3.x compatibility, Idiomatic code, Error handling",
+        "Java": "Default: Correct Java Syntax, Logical implementation, Execution output",
+        "Docker": "Default: Proper CLI usage, Container management, Dockerfile best practices",
+        "General": "Default: Overall code structure, Clarity and comments, Problem solving",
         "Custom": "Enter your custom grading criteria here..."
     }
     
     custom_rubric = st.text_area(
-        "Grading Rubric", 
-        value=default_rubrics.get(assessment_type, ""),
+        "Custom Grading Rubric (Optional)", 
+        value="",
+        placeholder=rubric_placeholders.get(assessment_type, ""),
         height=100,
-        help="The AI will use this exact criteria to grade the video."
+        help="Leave BLANK to use the built-in strict rubric. Or enter custom criteria to override."
     )
 
     # Proctoring Toggle
