@@ -1,10 +1,14 @@
 # Exam-Flow 🎓
 
-A dockerized microservices suite for automated video grading and proctoring. Features multimodal AI analysis for Java, Docker, and DevOps practical assessments using FastAPI and Gemini 1.5 Pro.
+A dockerized microservices suite for automated video grading and proctoring. Features multimodal AI analysis for Java, Docker, and DevOps practical assessments using FastAPI and Gemini 2.0 Flash.
+
+## 🎥 Video Demo
+
+Watch the full walkthrough: [Demo Video](./Video%20Demo/demo%20video_Exam-Flow-hevc.mp4)
 
 ## 🏗️ Architecture
 
-- **Backend (FastAPI):** Orchestrates AI analysis, video processing (MediaPipe), and Gemini API calls.
+- **Backend (FastAPI):** Orchestrates AI analysis, video processing (OpenCV), and Gemini API calls.
 - **Frontend (Streamlit):** Student/Admin dashboard for uploading recordings and viewing grading reports.
 - **Docker:** Entire suite is containerized for seamless deployment.
 

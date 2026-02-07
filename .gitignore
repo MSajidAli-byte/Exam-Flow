@@ -1,0 +1,16 @@
+# Large files
+Video Demo/demo video_Exam-Flow.mp4
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Docker
+.docker/
+
+# Assets
+uploads/
+screenshots/
