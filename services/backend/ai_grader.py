@@ -71,10 +71,60 @@ class AIGrader:
                     if flag['severity'] != 'Info':
                         cv_context += f"- [{flag['timestamp']}] {flag['issue']} (Severity: {flag['severity']})\n"
 
-            # Build dynamic prompt based on proctoring mode
+            # Build dynamic prompt based on proctoring mode and rubric type
             if proctoring_enabled:
-                # STRICT MODE: Integrity-first scoring with behavioral analysis
-                prompt = f"""
+                # Check if this is a custom rubric or a default one
+                is_custom_rubric = rubric and not any(default in rubric for default in [
+                    "Python 3.x compatibility", 
+                    "Correct Java Syntax", 
+                    "Proper CLI usage",
+                    "Overall code structure"
+                ])
+                
+                if is_custom_rubric:
+                    # CUSTOM RUBRIC MODE: User's instructions take priority, behavioral data is supplementary
+                    prompt = f"""
+You are a Technical Assessment AI evaluating a candidate's coding performance.
+
+**PRIMARY DIRECTIVE - CUSTOM GRADING RUBRIC:**
+{rubric}
+
+**SUPPLEMENTARY BEHAVIORAL DATA:**
+The following behavioral events were detected during the session:
+{cv_context if cv_context else "No significant behavioral anomalies detected."}
+
+**ANALYSIS TASKS:**
+1. Evaluate the candidate strictly according to the CUSTOM RUBRIC provided above.
+2. Use the behavioral data as supplementary context, but the rubric is your PRIMARY instruction.
+3. Provide specific timestamps for key events.
+4. Give a score from 0-100 based on the custom rubric criteria.
+
+**OUTPUT FORMAT:**
+
+### 📝 Assessment Report
+**Status:** [Complete / Incomplete]
+
+### 📋 Executive Summary
+[Brief overview of the candidate's performance against the custom rubric]
+
+### 🕒 Detailed Timeline
+[Chronological log with MM:SS timestamps of key events]
+
+### 📊 Custom Rubric Evaluation
+[Item-by-item assessment based on the provided custom rubric]
+
+### 🚨 Behavioral Context (Supplementary)
+[Summary of behavioral flags if any, for context only]
+
+### 🏆 Final Score
+**X/100**
+
+### 🖋️ Justification
+[Detailed explanation of the score based on the custom rubric]
+                    """
+                else:
+                    # STRICT MODE: Default rubric with integrity-first scoring
+                    prompt = f"""
 You are an ELITE ACADEMIC PROCTOR and SENIOR TECHNICAL INVESTIGATOR. Your primary goal is to verify the INDEPENDENT production of work.
 
 {cv_context}
@@ -122,7 +172,7 @@ Example: 00:45 - High-level logic suddenly appeared - SUSPICION: Plagiarism/Past
 
 **VERDICT JUSTIFICATION:**
 [A strong, clear explanation of why this score was given. If plagiarism was found, explicitly state that the score was capped due to integrity failure.]
-                """
+                    """
             else:
                 # TECHNICAL-ONLY MODE: Pure code grading without behavioral analysis
                 prompt = f"""
