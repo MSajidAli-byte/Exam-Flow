@@ -176,7 +176,10 @@ with col1:
     enable_proctoring = st.checkbox("Enable Behavioral Proctoring", value=True, help="If disabled, AI will ignore gaze/face detection and only focus on technical grading.")
     
     # Video Upload
-    uploaded_file = st.file_uploader("Upload Recording (MP4, MOV, AVI)", type=["mp4", "mov", "avi"])
+    uploaded_file = st.file_uploader(
+        "Upload Recording (MP4, MOV, AVI, WebM, MKV, FLV)", 
+        type=["mp4", "mov", "avi", "webm", "mkv", "flv"]
+    )
     
     if uploaded_file is not None:
         st.video(uploaded_file)
