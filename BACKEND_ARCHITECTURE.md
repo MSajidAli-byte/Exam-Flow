@@ -2,7 +2,7 @@
 
 ## 1. Overall System Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                     EXAM-FLOW BACKEND SYSTEM                     │
 └─────────────────────────────────────────────────────────────────┘
@@ -100,7 +100,7 @@
 
 ## 2. Video Processing Pipeline (Detailed)
 
-```
+```text
 START: Video File Received
          │
          ▼
@@ -157,7 +157,7 @@ START: Video File Received
 
 ## 3. AI Grading Decision Tree
 
-```
+```text
                     ┌──────────────────────┐
                     │  Receive Grading     │
                     │  Request             │
@@ -230,7 +230,7 @@ START: Video File Received
 
 ## 4. Proctoring Analysis Flow (OpenCV Engine)
 
-```
+```text
 START: Video File Path
          │
          ▼
@@ -312,7 +312,7 @@ START: Video File Path
 
 ## 5. Model Fallback & Error Handling
 
-```
+```text
 ┌──────────────────────────────────────────┐
 │  AI Grading Request Initiated            │
 └────────┬─────────────────────────────────┘
@@ -399,7 +399,7 @@ START: Video File Path
 
 ## 7. Data Flow Summary
 
-```
+```text
 Video Upload → File Save → Parallel Processing
                               │
                 ┌─────────────┴─────────────┐

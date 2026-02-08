@@ -4,14 +4,14 @@ import time
 from typing import Dict, Any
 
 class AIGrader:
-    # Verified exact model names for quota resilience and performance
+    # Optimized for video analysis - Prioritizing Gemini 2.5 and Gemini 3 series
     MODEL_FALLBACK_ORDER = [
-        'models/gemini-2.0-flash',
-        'models/gemini-2.5-flash',
-        'models/gemini-3-flash-preview',
-        'models/gemini-flash-latest',
-        'models/gemini-2.0-flash-lite',
-        'models/gemini-1.5-pro',
+        'models/gemini-2.5-flash',       # Primary: Latest 2.5 series
+        'models/gemini-3-flash-preview', # Secondary: Cutting edge reasoning
+        'models/gemini-2.5-flash-lite',  # Fallback 1: High efficiency 2.5
+        'models/gemini-2.0-flash',       # Fallback 2: Proven 2.0 frontier
+        'models/gemini-flash-latest',    # Fallback 3: Stable workhorse
+        'models/gemini-pro-latest'       # Fallback 4: High quality fallback
     ]
     
     def __init__(self, api_key: str):
@@ -222,11 +222,12 @@ You are a Senior Technical Interviewer evaluating a candidate's coding performan
                     return response.text
                 except Exception as e:
                     error_msg = str(e)
-                    if "429" in error_msg or "quota" in error_msg.lower():
-                        print(f"🛑 Quota hit for {model_name}. Attempting fallback...")
+                    # Handle both quota issues AND "Model Not Found" issues
+                    if any(x in error_msg.lower() for x in ["429", "quota", "404", "not found", "supported"]):
+                        print(f"⚠️ Model {model_name} failed or unavailable. Attempting fallback...")
                         continue # Try next model
                     else:
-                        raise e # Re-raise if it's not a quota issue
+                        raise e # Re-raise if it's a critical logic/auth error
 
             # If all models fail
             return f"""
