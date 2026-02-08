@@ -164,11 +164,22 @@ Updated `MODEL_FALLBACK_ORDER` and implemented a **Multi-Model Auto-Fallback** m
 
 ```python
 MODEL_FALLBACK_ORDER = [
+# Previous models
+    'gemini-1.0-pro',         # Previous: Legacy stable model
+    'gemini-2.0-flash-exp',   # Latest: Gemini 2.0 experimental    
     'gemini-1.5-flash',       # Primary: Stable flash
     'gemini-1.5-flash-latest',# Fallback 1: Latest flash
     'gemini-1.5-flash-8b',    # Fallback 2: High speed
     'gemini-1.5-pro',         # Fallback 3: High quality
     'gemini-1.5-pro-latest',  # Fallback 4: Latest pro
+#current models
+    'models/gemini-2.5-flash',       # Primary: Latest 2.5 series
+    'models/gemini-3-flash-preview', # Secondary: Cutting edge reasoning
+    'models/gemini-2.5-flash-lite',  # Fallback 1: High efficiency 2.5
+    'models/gemini-2.0-flash',       # Fallback 2: Proven 2.0 frontier
+    'models/gemini-flash-latest',    # Fallback 3: Stable workhorse
+    'models/gemini-pro-latest'       # Fallback 4: High quality fallback
+    
 ]
 ```
 
