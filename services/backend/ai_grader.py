@@ -4,14 +4,14 @@ import time
 from typing import Dict, Any
 
 class AIGrader:
-    # Optimized for video analysis - Prioritizing Gemini 2.5 and Gemini 3 series
+    # Optimized for video analysis - Prioritizing Gemini 3 and 2.5 series
     MODEL_FALLBACK_ORDER = [
-        'models/gemini-2.5-flash',       # Primary: Latest 2.5 series
-        'models/gemini-3-flash-preview', # Secondary: Cutting edge reasoning
-        'models/gemini-2.5-flash-lite',  # Fallback 1: High efficiency 2.5
-        'models/gemini-2.0-flash',       # Fallback 2: Proven 2.0 frontier
-        'models/gemini-flash-latest',    # Fallback 3: Stable workhorse
-        'models/gemini-pro-latest'       # Fallback 4: High quality fallback
+        'models/gemini-3-flash-preview', # Primary: Cutting edge reasoning
+        'models/gemini-2.5-flash',       # Fallback 1: Latest 2.5 series
+        'models/gemini-2.5-flash-lite',  # Fallback 2: High efficiency 2.5
+        'models/gemini-2.0-flash',       # Fallback 3: Proven 2.0 frontier
+        'models/gemini-flash-latest',    # Fallback 4: Stable workhorse
+        'models/gemini-pro-latest'       # Fallback 5: High quality fallback
     ]
     
     def __init__(self, api_key: str):
