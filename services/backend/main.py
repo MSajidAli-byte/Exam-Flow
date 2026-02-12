@@ -4,16 +4,39 @@ import os
 from dotenv import load_dotenv
 from ai_grader import AIGrader
 from proctor import ProctorEngine
+from rag.rag_manager import RagManager
+from package_processor import PackageProcessor
+from pydantic import BaseModel
 
 load_dotenv()
 
 app = FastAPI(title="Exam-Flow AI Backend")
 
 # Initialize AI Services
-# In a real app, you'd manage these as dependencies or singletons
 api_key = os.getenv("GOOGLE_API_KEY")
 grader = AIGrader(api_key) if api_key else None
 proctor = ProctorEngine()
+rag_manager = RagManager()
+
+class SolutionPackage(BaseModel):
+    solution_id: str
+    code: str
+    context: str
+    category: str = "General"
+
+@app.post("/library/upload")
+async def upload_to_library(package: SolutionPackage):
+    """Adds a gold-standard solution to the RAG library."""
+    try:
+        rag_manager.add_solution(
+            solution_id=package.solution_id,
+            code=package.code,
+            context=package.context,
+            metadata={"category": package.category}
+        )
+        return {"status": "success", "message": f"Solution {package.solution_id} added to library."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Configure CORS
 app.add_middleware(
@@ -73,7 +96,7 @@ async def analyze_demo(demo_type: str):
         raise HTTPException(status_code=404, detail=f"Video not found at {video_path}")
 
     behavioral_flags = proctor.analyze_behavior(video_path)
-    report = grader.grade_video(video_path, rubrics.get(demo_type, rubrics["general"]), behavioral_flags=behavioral_flags)
+    report = await grader.grade_video(video_path, rubrics.get(demo_type, rubrics["general"]), behavioral_flags=behavioral_flags)
 
     return {
         "demo": demo_type,
@@ -121,7 +144,7 @@ async def analyze_video_v2(
             behavioral_flags = proctor.analyze_behavior(file_path)
         
         # Grade with CV flags if enabled, otherwise just grade the video
-        report = grader.grade_video(file_path, rubric, behavioral_flags=behavioral_flags if enable_proctoring else None)
+        report = await grader.grade_video(file_path, rubric, behavioral_flags=behavioral_flags if enable_proctoring else None)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -131,6 +154,66 @@ async def analyze_video_v2(
         "behavioral_flags": behavioral_flags,
         "proctoring_enabled": enable_proctoring
     }
+
+@app.post("/analyze-package")
+async def analyze_package(
+    assessment_type: str,
+    custom_rubric: str = None,
+    enable_proctoring: bool = True,
+    file: UploadFile = File(...)
+):
+    """
+    Analyzes a ZIP package containing video, code, and context.
+    """
+    if not grader:
+        raise HTTPException(status_code=500, detail="GOOGLE_API_KEY not configured")
+
+    # Save ZIP locally
+    upload_dir = "uploads"
+    package_dir = os.path.join(upload_dir, "extracted_" + file.filename.replace(".", "_"))
+    os.makedirs(upload_dir, exist_ok=True)
+    zip_path = os.path.join(upload_dir, file.filename)
+    
+    with open(zip_path, "wb") as buffer:
+        content = await file.read()
+        buffer.write(content)
+
+    try:
+        # Process Package
+        package_info = PackageProcessor.process_zip(zip_path, package_dir)
+        source_code = PackageProcessor.read_file(package_info["code"])
+        context = PackageProcessor.read_file(package_info["context"])
+        
+        # Combine contextual info into rubric if needed
+        rubric = custom_rubric or (f"Evaluate based on: {context}" if context else "Standard Technical Assessment")
+        
+        behavioral_flags = []
+        video_path = package_info["video"]
+        
+        if video_path and enable_proctoring:
+            behavioral_flags = proctor.analyze_behavior(video_path)
+        
+        # Grade with all multi-modal context
+        report = await grader.grade_video(
+            video_path=video_path, 
+            rubric=rubric, 
+            behavioral_flags=behavioral_flags,
+            source_code=source_code
+        )
+        
+        # Cleanup
+        PackageProcessor.cleanup(package_dir)
+        
+        return {
+            "type": assessment_type,
+            "report": report,
+            "behavioral_flags": behavioral_flags,
+            "has_code": bool(source_code),
+            "has_video": bool(video_path)
+        }
+    except Exception as e:
+        PackageProcessor.cleanup(package_dir)
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")
 async def health_check():

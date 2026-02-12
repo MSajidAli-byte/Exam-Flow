@@ -13,6 +13,36 @@ st.set_page_config(
     layout="wide"
 )
 
+# Phase 2: Simple Security Layer
+def check_password():
+    """Returns True if the user had the correct password."""
+    def password_entered():
+        if st.session_state["password"] == os.getenv("APP_PASSWORD", "examflow2026"):
+            st.session_state["password_correct"] = True
+            del st.session_state["password"]  # don't store password
+        else:
+            st.session_state["password_correct"] = False
+
+    if "password_correct" not in st.session_state:
+        # First run, show input for password.
+        st.text_input(
+            "Enter Password", type="password", on_change=password_entered, key="password"
+        )
+        return False
+    elif not st.session_state["password_correct"]:
+        # Password not correct, show input + error.
+        st.text_input(
+            "Enter Password", type="password", on_change=password_entered, key="password"
+        )
+        st.error("😕 Password incorrect")
+        return False
+    else:
+        # Password correct.
+        return True
+
+if not check_password():
+    st.stop()  # Do not run the rest of the app
+
 def get_override():
     if st.session_state.get('manual_controls', {}).get('enabled'):
         return {
@@ -107,7 +137,11 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 📊 System Status")
     st.success("🟢 Backend: Online")
-    st.info("🔵 AI Model: Gemini 2.0 Flash")
+    # Phase 2 Status
+    is_agentic = os.getenv("AGENTIC_MODE", "off").lower() == "on"
+    st.info(f"🔵 AI Mode: {'Expert Agentic (Phase 2)' if is_agentic else 'Standard Grading (Phase 1)'}")
+    if is_agentic:
+        st.success("🧠 ChromaDB Persistent RAG Enabled")
 
 st.title("🎓 Exam-Flow AI Assistant")
 st.markdown("**Professional AI-Powered Assessment & Proctoring Platform**")
@@ -148,6 +182,13 @@ def get_current_override():
 with col1:
     st.header("📤 Assessment Portal")
     
+    # Selection Mode: Phase 2 Feature
+    upload_mode = st.radio(
+        "Upload Mode",
+        ["Single Video", "Solution Package (ZIP)"],
+        help="Use 'Solution Package' to upload video + source code + context for Agentic grading."
+    )
+    
     # Assessment Type Selector
     assessment_type = st.selectbox(
         "Select Role/Stack", 
@@ -175,26 +216,36 @@ with col1:
     # Proctoring Toggle
     enable_proctoring = st.checkbox("Enable Behavioral Proctoring", value=True, help="If disabled, AI will ignore gaze/face detection and only focus on technical grading.")
     
-    # Video Upload
-    uploaded_file = st.file_uploader(
-        "Upload Recording (MP4, MOV, AVI, WebM, MKV, FLV)", 
-        type=["mp4", "mov", "avi", "webm", "mkv", "flv"]
-    )
+    # File Uploader based on Mode
+    if upload_mode == "Single Video":
+        uploaded_file = st.file_uploader(
+            "Upload Recording (MP4, MOV, AVI, WebM, MKV, FLV)", 
+            type=["mp4", "mov", "avi", "webm", "mkv", "flv"]
+        )
+    else:
+        uploaded_file = st.file_uploader(
+            "Upload Solution ZIP (Video + Code + Context)", 
+            type=["zip"]
+        )
+        st.caption("ℹ️ ZIP should contain video, source files, and optional context.txt")
     
     if uploaded_file is not None:
-        st.video(uploaded_file)
+        if upload_mode == "Single Video":
+            st.video(uploaded_file)
         
-        if st.button("🚀 Analyze Uploaded Video"):
-            with st.spinner(f"AI is analyzing video... This may take a minute."):
+        button_label = "🚀 Analyze Solution Package" if upload_mode == "Solution Package (ZIP)" else "🚀 Analyze Uploaded Video"
+        
+        if st.button(button_label):
+            endpoint = "/analyze-package" if upload_mode == "Solution Package (ZIP)" else "/analyze-video"
+            with st.spinner(f"AI Agents are analyzing your submission... This may take a minute."):
                 files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
-                # Fetch fresh analysis (direct call for uploads to ensure quality)
                 try:
                     params = {
                         "assessment_type": assessment_type,
                         "custom_rubric": custom_rubric,
                         "enable_proctoring": enable_proctoring
                     }
-                    response = requests.post(f"{BACKEND_URL}/analyze-video", params=params, files=files)
+                    response = requests.post(f"{BACKEND_URL}{endpoint}", params=params, files=files)
                     
                     if response.status_code == 200:
                         result = response.json()

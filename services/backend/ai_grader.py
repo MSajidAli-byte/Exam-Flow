@@ -3,6 +3,9 @@ import os
 import time
 from typing import Dict, Any
 
+from agents.orchestrator import AgentOrchestrator
+from rag.rag_manager import RagManager
+
 class AIGrader:
     # Optimized for video analysis - Prioritizing Gemini 3 and 2.5 series
     MODEL_FALLBACK_ORDER = [
@@ -19,6 +22,11 @@ class AIGrader:
         self.api_key = api_key
         self.model = None
         self.current_model_name = None
+        
+        # Phase 2 Components
+        self.orchestrator = AgentOrchestrator()
+        self.rag_manager = RagManager()
+        self.agentic_mode = os.getenv("AGENTIC_MODE", "off").lower() == "on"
         
         # Initial model selection
         self.switch_model(self.MODEL_FALLBACK_ORDER[0])
@@ -53,8 +61,25 @@ class AIGrader:
                 raise Exception(f"File {file.name} failed to process")
         print("...all files active")
 
-    def grade_video(self, video_path: str, rubric: str, behavioral_flags: list = None) -> str:
-        """Analyzes a video against a rubric using dynamic model fallback for quota resilience."""
+    async def grade_video(self, video_path: str, rubric: str, behavioral_flags: list = None, source_code: str = None) -> str:
+        """Analyzes a video against a rubric using dynamic model fallback or Agentic Orchestration."""
+        
+        # Phase 2: Agentic Workflow
+        if self.agentic_mode:
+            print("🧠 Phase 2: Triggering Agentic Multi-Modal Analysis...")
+            cv_summary = ""
+            if behavioral_flags:
+                for flag in behavioral_flags:
+                    cv_summary += f"- [{flag['timestamp']}] {flag['issue']} ({flag['severity']})\n"
+            
+            # Run the multi-agent synthesis
+            return await self.orchestrator.run_analysis(
+                video_data={"cv_context": cv_summary, "video_path": video_path},
+                source_code=source_code or "No code provided",
+                rubric=rubric
+            )
+
+        # Phase 1: Legacy Linear Workflow (Fallback)
         video_file = None
         try:
             video_file = self.upload_to_gemini(video_path, mime_type="video/mp4")
