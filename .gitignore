@@ -1,16 +1,64 @@
 # Large files
 Video Demo/demo video_Exam-Flow.mp4
+*.mp4
+*.avi
+*.mov
+*.webm
+*.mkv
+*.flv
 
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 venv/
+env/
 .env
+.venv
 
 # Docker
 .docker/
+*.tar
+*.tar.gz
+exam-flow-*.tar
 
 # Assets
 uploads/
 screenshots/
+
+# Phase 2: RAG & Vector Database
+chroma_db/
+*.db
+*.sqlite
+*.sqlite3
+
+# Phase 2: Research Data
+research_data/
+experiment_results/
+baseline_metrics/
+
+# Backups
+backups/
+*.backup
+chroma_backup_*.tar.gz
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp

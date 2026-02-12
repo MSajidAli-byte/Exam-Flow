@@ -73,11 +73,33 @@ docker compose up --build
 
 ## 🛠️ Key Features
 
-- [x] **Gemini 2.0 Flash Integration**: Latest frontier model for fast code analysis.
+- [x] **Gemini 3 Flash Integration**: Cutting-edge reasoning with Gemini 3 Flash Preview.
 - [x] **Hardened Integrity Logic**: Zero-tolerance scoring (20/100 cap) for plagiarism.
 - [x] **Behavioral Proctoring**: OpenCV-based gaze and face detection (Eyeglasses supported).
 - [x] **Hybrid Review Panel**: Manual score overrides with reviewer justification.
 - [x] **Professional Reporting**: High-quality PDF assessment exports.
+- [x] **Multi-Format Support**: MP4, MOV, AVI, WebM, MKV, FLV video uploads.
+
+## 📚 Documentation
+
+### Core Documentation
+
+- **[CLIENT_HANDOVER.md](CLIENT_HANDOVER.md)** - Client deployment guide and feature overview
+- **[BACKEND_ARCHITECTURE.md](BACKEND_ARCHITECTURE.md)** - Detailed backend flow charts and architecture
+- **[COST_ANALYSIS.md](COST_ANALYSIS.md)** - API costs, pricing, and quota management
+
+### Phase 2 Development (Agentic AI & RAG)
+
+- **[PHASE2_SETUP_COMPLETE.md](PHASE2_SETUP_COMPLETE.md)** - ⭐ Start here for Phase 2 overview
+- **[PHASE2_TRANSITION_GUIDE.md](PHASE2_TRANSITION_GUIDE.md)** - Comprehensive transition guide
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Essential commands cheat sheet
+
+### Version Control
+
+- **Current Stable**: `v1.0-milestone1` (Milestone 1 - Client Approved)
+- **Development Branch**: `feature/phase2-agentic-rag` (Phase 2 - Agentic AI)
 
 ---
+
 *For detailed client documentation, see [CLIENT_HANDOVER.md](CLIENT_HANDOVER.md)*
+*For Phase 2 development, see [PHASE2_SETUP_COMPLETE.md](PHASE2_SETUP_COMPLETE.md)*
