@@ -5,7 +5,7 @@ def init_library():
     print("Initialize Ideal Solution Library...")
     rag = RagManager()
     
-    # Sample Application: Java OOP
+    # 1. Java OOP
     rag.add_solution(
         solution_id="java_oop_001",
         context="A Java application demonstrating Inheritance, Polymorphism, and Encapsulation.",
@@ -22,7 +22,7 @@ public class Dog extends Animal {
         metadata={"category": "Java", "difficulty": "Intermediate"}
     )
     
-    # Sample Application: Dockerfile Best Practices
+    # 2. Dockerfile Best Practices
     rag.add_solution(
         solution_id="docker_001",
         context="A multi-stage build Dockerfile for a Python application.",
@@ -40,6 +40,19 @@ ENV PATH=/root/.local/bin:$PATH
 CMD ["python", "app.py"]
         """,
         metadata={"category": "Docker", "difficulty": "Advanced"}
+    )
+
+    # 3. Python Factorial (Recursive)
+    rag.add_solution(
+        solution_id="python_fact_001",
+        context="Recursive factorial implementation in Python.",
+        code="""
+def factorial(n):
+    if n == 0 or n == 1:
+        return 1
+    return n * factorial(n - 1)
+        """,
+        metadata={"category": "Python", "difficulty": "Beginner"}
     )
     
     print("Library initialized successfully.")

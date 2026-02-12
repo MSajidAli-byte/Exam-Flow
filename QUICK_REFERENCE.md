@@ -166,6 +166,36 @@ docker-compose up -d
 
 ---
 
+## 📈 Research & Evaluation
+
+### 1. Initialize RAG Library
+
+Must be done once after switching to Phase 2:
+
+```bash
+docker exec exam-flow-backend-1 python init_rag.py
+```
+
+### 2. Generate Golden Dataset
+
+Creates 7 test cases in `research/cases/`:
+
+```bash
+python research/generate_dataset.py
+```
+
+### 3. Run Scientific Evaluation
+
+Runs the ZIP packages through the AI team and calculates Precision/Recall:
+
+```bash
+python research/evaluate_system.py
+```
+
+*Note: Results are printed to the console and logs are stored in the backend.*
+
+---
+
 ## 🐛 Troubleshooting
 
 ### Container Won't Start
