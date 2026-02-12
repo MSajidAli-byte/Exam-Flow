@@ -6,9 +6,13 @@ services:
       - "8000:8000"
     environment:
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - PHASE=${PHASE:-1}  # Default to Phase 1 (stable), set PHASE=2 for Agentic AI
+      - AGENTIC_MODE=${AGENTIC_MODE:-off}  # Enable with AGENTIC_MODE=on
     volumes:
       - ./services/backend:/app
       - .:/project_root
+      - chroma_db:/app/chroma_db  # Persistent storage for RAG vector database
+      - uploads:/app/uploads  # Persistent storage for uploaded videos
     restart: always
 
   frontend:
@@ -18,6 +22,7 @@ services:
       - "8501:8501"
     environment:
       - BACKEND_URL=http://backend:8000
+      - PHASE=${PHASE:-1}
     volumes:
       - ./services/frontend:/app
     depends_on:
@@ -26,3 +31,5 @@ services:
 
 volumes:
   video_data:
+  chroma_db:  # Named volume for ChromaDB persistence (Phase 2)
+  uploads:    # Named volume for video uploads
