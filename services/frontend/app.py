@@ -213,8 +213,9 @@ with st.sidebar:
             
             eval_progress.progress((i + 1) / len(cases))
             if i < len(cases) - 1:
-                # Conservative delay for Free Tier (4 agents per case)
-                time.sleep(45) 
+                # Conservative delay: 4 agents × 10s each + 60s buffer = 100s
+                st.sidebar.text(f"⏳ Waiting 100s before next case to respect API limits...")
+                time.sleep(100) 
         
         if results:
             st.session_state['eval_results'] = results

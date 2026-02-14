@@ -22,37 +22,39 @@ class AgentOrchestrator:
         ideal_context = self.rag_manager.get_grading_context(source_code)
         
         # Step 2: Parallel Analysis (Sequential for rate management)
-        print("🚀 Agent B starting analysis...")
+        print("🚀 Agent A (Visual Proctor) starting analysis...")
         visual_report = self.visual_proctor.run(video_data)
         
-        print("⏳ Rate limiting delay (5s)...")
+        print("⏳ Rate limiting delay (10s)...")
         import time
-        time.sleep(5)
+        time.sleep(10)  # Increased from 5s to respect project-wide quota
         
-        print("🚀 Agent C starting analysis...")
+        print("🚀 Agent B (Code Reviewer) starting analysis...")
         code_report = self.code_reviewer.run({
             "source_code": source_code,
             "rubric": f"{rubric}\n\n{ideal_context}"
         })
         
         # Step 3: Cross-Reference (Integrity Auditor)
-        print("⏳ Rate limiting delay (5s)...")
-        time.sleep(5)
+        print("⏳ Rate limiting delay (10s)...")
+        time.sleep(10)
         
-        print("🔍 Agent C performing integrity audit...")
+        print("🔍 Agent C (Integrity Auditor) performing audit...")
         audit_report = self.integrity_auditor.run({
             "visual_report": visual_report,
             "code_report": code_report
         })
         
         # Step 4: Final Synthesis (Final Grader)
-        print("⏳ Rate limiting delay (5s)...")
-        time.sleep(5)
+        print("⏳ Rate limiting delay (10s)...")
+        time.sleep(10)
         
-        print("🏆 Agent D generating final verdict...")
+        print("🏆 Agent D (Final Grader) generating verdict...")
         final_report = self.final_grader.run({
+            "visual_report": visual_report,
+            "code_report": code_report,
             "audit_report": audit_report,
-            "code_score": "See code report" # Simplification for now
+            "rubric": rubric
         })
         
         return final_report

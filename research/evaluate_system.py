@@ -21,7 +21,13 @@ def run_evaluation():
     
     for filename, truth in GROUND_TRUTH.items():
         print(f"\n📊 Processing: {filename}")
-        file_path = f"research/cases/{filename}"
+        
+        # Handle both running from project root and from research/ directory
+        import os
+        if os.path.exists(f"cases/{filename}"):
+            file_path = f"cases/{filename}"
+        else:
+            file_path = f"research/cases/{filename}"
         
         with open(file_path, "rb") as f:
             files = {"file": (filename, f, "application/zip")}

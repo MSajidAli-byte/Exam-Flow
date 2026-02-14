@@ -2,37 +2,71 @@ import google.generativeai as genai
 from typing import List, Any, Dict
 import os
 import time
-from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
 
 class BaseAgent:
-    """Base class for all Phase 2 agents with robust retry logic."""
-    def __init__(self, model_name: str = 'models/gemini-flash-latest'):
-        self.model_name = model_name
+    """Base class for all Phase 2 agents with intelligent multi-model fallback."""
+    
+    # Priority order based on ACTUAL available models and quota limits
+    # Strategy: Use stable 2.5/2.0 models, avoid experimental variants
+    MODEL_FALLBACK_ORDER = [
+        'models/gemini-2.5-flash',        # Primary: Latest stable, 161K TPM, 2/5 RPM (from screenshot)
+        'models/gemini-2.0-flash',        # Fallback 1: Unlimited TPM, 0/15 RPD (fresh quota)
+        'models/gemini-flash-latest',     # Fallback 2: Alias to stable flash (48K TPM)
+        'models/gemini-2.5-pro',          # Fallback 3: Unlimited TPM, high reasoning
+        'models/gemini-pro-latest',       # Fallback 4: Stable pro alias
+        'models/gemini-2.0-flash-lite',   # Fallback 5: Lightweight, unlimited TPM
+    ]
+    
+    def __init__(self, model_name: str = None):
         self.api_key = os.getenv("GOOGLE_API_KEY")
         genai.configure(api_key=self.api_key)
-        self.model = genai.GenerativeModel(model_name)
+        self.current_model_index = 0
+        self.model_name = model_name or self.MODEL_FALLBACK_ORDER[0]
+        self.model = genai.GenerativeModel(self.model_name)
 
-    @retry(
-        wait=wait_exponential(multiplier=1, min=2, max=30),
-        stop=stop_after_attempt(5),
-        reraise=True
-    )
     def generate_response(self, prompt: str) -> str:
-        """Helper method to generate response with retries."""
-        try:
-            response = self.model.generate_content(prompt)
-            return response.text
-        except Exception as e:
-            error_message = str(e)
-            if "429" in error_message:
-                print(f"🛑 Quota Exceeded for {self.model_name}")
-                return "ERROR: API Quota Exceeded. Please try again in 60 seconds."
-            elif "500" in error_message:
-                print(f"⚠️ Agent API Internal Error (500): {error_message}")
-                return "ERROR: API Internal Error. Please try again later."
-            else:
-                print(f"⚠️ Agent API Error: {error_message}")
-                return f"ERROR: An unexpected API error occurred: {error_message}"
+        """Generate response with automatic model fallback on quota errors."""
+        for attempt, model_name in enumerate(self.MODEL_FALLBACK_ORDER):
+            try:
+                # Switch to next model in fallback chain
+                if attempt > 0:
+                    print(f"🔄 Switching to fallback model: {model_name}")
+                    self.model = genai.GenerativeModel(model_name)
+                    self.model_name = model_name
+                
+                response = self.model.generate_content(prompt)
+                
+                # Success! Log which model worked
+                if attempt > 0:
+                    print(f"✅ Success with {model_name}")
+                
+                return response.text
+                
+            except Exception as e:
+                error_message = str(e)
+                
+                # Check if this is a quota error
+                if "429" in error_message or "quota" in error_message.lower():
+                    print(f"🛑 Quota exceeded for {model_name}")
+                    
+                    # If this was the last model, return error
+                    if attempt == len(self.MODEL_FALLBACK_ORDER) - 1:
+                        return f"ERROR: All models exhausted. Please wait 60 seconds and try again."
+                    
+                    # Otherwise, continue to next model
+                    time.sleep(2)  # Brief pause before trying next model
+                    continue
+                
+                # For non-quota errors, try next model but log the error
+                print(f"⚠️ Error with {model_name}: {error_message[:100]}")
+                
+                if attempt == len(self.MODEL_FALLBACK_ORDER) - 1:
+                    return f"ERROR: All models failed. Last error: {error_message[:200]}"
+                
+                time.sleep(1)
+                continue
+        
+        return "ERROR: Unexpected fallback loop termination."
 
     def run(self, input_data: Dict[str, Any]) -> str:
         raise NotImplementedError("Subclasses must implement run()")
