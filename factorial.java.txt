@@ -1,0 +1,19 @@
+public class Factorial {
+
+    // Method to calculate factorial of a number
+    public static int calculateFactorial(int n) {
+        int result = 1;
+        for (int i = 1; i <= n; i++) {
+            result *= i;
+        }
+        return result;
+    }
+
+    public static void main(String[] args) {
+        int number = 5;
+        int result = calculateFactorial(number);
+        
+        // Showing the result in main using System.out.println
+        System.out.println("The factorial of " + number + " is: " + result);
+    }
+}
