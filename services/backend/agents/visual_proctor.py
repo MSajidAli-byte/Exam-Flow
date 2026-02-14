@@ -23,5 +23,4 @@ You are the VISUAL PROCTOR AGENT. Your role is to examine behavioral data detect
 - ANOMALY LOG: [MM:SS - Type - Intensity]
 - REASONING: [Brief explanation]
 """
-        response = self.model.generate_content(prompt)
-        return response.text
+        return self.generate_response(prompt)

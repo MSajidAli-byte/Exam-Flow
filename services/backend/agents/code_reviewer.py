@@ -29,5 +29,4 @@ You are the SENIOR CODE REVIEWER AGENT. Your role is to evaluate the technical q
 - TECHNICAL ANALYSIS: [Bullet points]
 - INTEGRITY CHECK: [Was the development process logical?]
 """
-        response = self.model.generate_content(prompt)
-        return response.text
+        return self.generate_response(prompt)

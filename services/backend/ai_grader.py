@@ -9,12 +9,11 @@ from rag.rag_manager import RagManager
 class AIGrader:
     # Optimized for video analysis - Prioritizing Gemini 3 and 2.5 series
     MODEL_FALLBACK_ORDER = [
-        'models/gemini-3-flash-preview', # Primary: Cutting edge reasoning
-        'models/gemini-2.5-flash',       # Fallback 1: Latest 2.5 series
-        'models/gemini-2.5-flash-lite',  # Fallback 2: High efficiency 2.5
-        'models/gemini-2.0-flash',       # Fallback 3: Proven 2.0 frontier
-        'models/gemini-flash-latest',    # Fallback 4: Stable workhorse
-        'models/gemini-pro-latest'       # Fallback 5: High quality fallback
+        'models/gemini-2.5-flash',       # Primary: Latest 2.5 series (Verified)
+        'models/gemini-2.0-flash',       # Fallback 1: Proven 2.0 frontier (Verified)
+        'models/gemini-flash-latest',    # Fallback 2: Stable workhorse (Verified)
+        'models/gemini-3-flash-preview', # Fallback 3: Experimental
+        'models/gemini-pro-latest'       # Fallback 4: High quality fallback
     ]
     
     def __init__(self, api_key: str):

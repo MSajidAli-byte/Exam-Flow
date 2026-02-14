@@ -8,10 +8,10 @@ python-dotenv
 numpy
 
 # Phase 2: Agentic AI & RAG
-langchain==0.1.0
-langchain-google-genai==0.0.6
-chromadb==0.4.22
-sentence-transformers==2.3.1
-tiktoken==0.5.2
-pydantic==2.5.3
-tenacity==8.2.3
+langchain>=0.1.0
+langchain-google-genai>=0.0.6
+chromadb>=0.4.22
+sentence-transformers>=2.3.1
+tiktoken>=0.5.2
+pydantic>=2.0.0
+tenacity>=8.0.0

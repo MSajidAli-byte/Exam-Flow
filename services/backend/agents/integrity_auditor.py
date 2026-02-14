@@ -26,5 +26,4 @@ Confirm if technical milestones in the code align with the candidate's presence 
 - CONFIDENCE SCORE: [0.0 - 1.0]
 - DISCREPANCIES: [List any mismatched events with timestamps]
 """
-        response = self.model.generate_content(prompt)
-        return response.text
+        return self.generate_response(prompt)

@@ -51,6 +51,9 @@ def run_evaluation():
                 print(f"✅ Completed in {duration:.2f}s. Verdict: {verdict}")
             else:
                 print(f"❌ Error: {response.text}")
+        
+        print("⏳ Cooling down before next case (30s)...")
+        time.sleep(30)
 
     # Calculate Metrics
     tp = sum(1 for r in results if r["actual_verdict"] == "FAIL" and r["expected_verdict"] == "FAIL")

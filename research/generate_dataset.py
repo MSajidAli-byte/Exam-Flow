@@ -18,7 +18,7 @@ def create_solution_package(case_id, video_source, code_content, context_content
         zipf.writestr("context.txt", context_content)
 
 def generate_all_cases():
-    base_video = "java_demo-Exam-Flow.mp4" # Placeholder video
+    base_video = "Java_Demo_Exam-Flow.mp4" # Corrected filename
     cases_dir = "research/cases"
     
     # Case 1: Standard Success (Java)

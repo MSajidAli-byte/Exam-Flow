@@ -27,5 +27,4 @@ You are the CHIEF ASSESSMENT AI. Your role is to produce the final academic verd
 - STATUS: [Certified/Flagged/Failed]
 - EXECUTIVE SUMMARY: [Professional narrative]
 """
-        response = self.model.generate_content(prompt)
-        return response.text
+        return self.generate_response(prompt)
