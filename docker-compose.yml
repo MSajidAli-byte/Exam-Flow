@@ -25,6 +25,7 @@ services:
       - PHASE=${PHASE:-1}
     volumes:
       - ./services/frontend:/app
+      - .:/project_root
     depends_on:
       - backend
     restart: always

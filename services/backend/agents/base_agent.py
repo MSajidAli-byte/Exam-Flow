@@ -23,8 +23,16 @@ class BaseAgent:
             response = self.model.generate_content(prompt)
             return response.text
         except Exception as e:
-            print(f"⚠️ Agent API Error: {str(e)}")
-            raise e
+            error_message = str(e)
+            if "429" in error_message:
+                print(f"🛑 Quota Exceeded for {self.model_name}")
+                return "ERROR: API Quota Exceeded. Please try again in 60 seconds."
+            elif "500" in error_message:
+                print(f"⚠️ Agent API Internal Error (500): {error_message}")
+                return "ERROR: API Internal Error. Please try again later."
+            else:
+                print(f"⚠️ Agent API Error: {error_message}")
+                return f"ERROR: An unexpected API error occurred: {error_message}"
 
     def run(self, input_data: Dict[str, Any]) -> str:
         raise NotImplementedError("Subclasses must implement run()")
