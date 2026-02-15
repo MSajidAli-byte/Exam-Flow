@@ -38,6 +38,7 @@ Full documentation has been organized into the `docs/` folder:
 
 - **[PHASE2_UPGRADE_GUIDE.md](docs/PHASE2_UPGRADE_GUIDE.md)**: Detailed step-by-step manual upgrade instructions.
 - **[PHASE2_CLIENT_HANDOVER.md](docs/PHASE2_CLIENT_HANDOVER.md)**: Feature overview for the client.
+- **[RESEARCH_PAPER_STRUCTURE.md](docs/RESEARCH_PAPER_STRUCTURE.md)**: Blueprint for academic publication (No humans required).
 - **[PHASE2_RESEARCH_PROTOCOL.md](docs/PHASE2_RESEARCH_PROTOCOL.md)**: Scientific validation metrics.
 
 ---

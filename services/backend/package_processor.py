@@ -7,7 +7,7 @@ class PackageProcessor:
     """Processes uploaded ZIP packages containing video, code, and context."""
     
     @staticmethod
-    def process_zip(zip_path: str, extract_dir: str) -> Dict[str, str]:
+    def process_zip(zip_path: str, extract_dir: str) -> Dict[str, Any]:
         """Extracts ZIP and returns paths to key files (recursively searching)."""
         os.makedirs(extract_dir, exist_ok=True)
         
@@ -16,7 +16,7 @@ class PackageProcessor:
             
         result = {
             "video": None,
-            "code": None,
+            "code": [],  # Changed to list to support multiple files
             "context": None
         }
         
@@ -28,40 +28,56 @@ class PackageProcessor:
                 
                 # Check for Video
                 if ext in ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.flv']:
-                    # Prioritize video if multiple found, or just take first
                     if not result["video"]:
                         result["video"] = file_path
                 
                 # Check for Code or Context
-                elif ext in ['.java', '.py', '.js', '.yaml', '.yml', '.txt', '.md', '.c', '.cpp', '.cs']:
-                    # Explicit context identification
-                    if 'context' in file.lower() or 'instruction' in file.lower() or 'readme' in file.lower():
-                        result["context"] = file_path
-                    # Code identification (avoid overwriting if we already found a 'better' code file)
+                elif ext in ['.java', '.py', '.js', '.yaml', '.yml', '.txt', '.md', '.c', '.cpp', '.cs', '.h', '.ts', '.go']:
+                    is_context = 'context' in file.lower() or 'instruction' in file.lower() or 'readme' in file.lower()
+                    
+                    if is_context:
+                         # Keep only one primary context file to avoid confusion, or could list them too.
+                         # For now, prioritize README/Instructions.
+                         if not result["context"]:
+                             result["context"] = file_path
                     elif ext not in ['.txt', '.md']:
-                        result["code"] = file_path
-                    # Fallback for text files if no code found yet
-                    elif not result["code"] and not result["context"]:
-                        # Could be code in .txt? Rare but possible
-                        pass
-        
-        # Final pass: If we found code but no context, and have a .txt left over, use it as context
-        if result["code"] and not result["context"]:
+                         # It's a code file! Add to list.
+                         result["code"].append(file_path)
+
+        # Final pass: If no context found, check .txt files again
+        if not result["context"]:
              for root, dirs, files in os.walk(extract_dir):
                 for file in files:
                     file_path = os.path.join(root, file)
                     ext = os.path.splitext(file)[1].lower()
-                    if ext == '.txt' and file_path != result["code"]:
+                    if ext == '.txt' and file_path not in result["code"]:
                         result["context"] = file_path
                         break
 
         return result
 
     @staticmethod
-    def read_file(file_path: str) -> str:
-        if not file_path or not os.path.exists(file_path):
+    def read_file(file_path_or_list: Any) -> str:
+        """Reads content from a single file path or a list of paths."""
+        if not file_path_or_list:
             return ""
-        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            
+        # Handle list of files (concatenation)
+        if isinstance(file_path_or_list, list):
+            combined_content = ""
+            for path in file_path_or_list:
+                if os.path.exists(path):
+                    filename = os.path.basename(path)
+                    content = ""
+                    with open(path, 'r', encoding='utf-8', errors='ignore') as f:
+                        content = f.read()
+                    combined_content += f"\n\n--- FILE: {filename} ---\n{content}"
+            return combined_content.strip()
+
+        # Handle single file path
+        if not os.path.exists(file_path_or_list):
+            return ""
+        with open(file_path_or_list, 'r', encoding='utf-8', errors='ignore') as f:
             return f.read()
 
     @staticmethod
