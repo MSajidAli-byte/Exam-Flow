@@ -5,6 +5,12 @@ echo "🚀 Starting Phase 2 Upgrade Protocol..."
 echo "🛑 Stopping existing containers..."
 docker-compose down
 
+# Step 1.5: Switch to Phase 2 Branch
+echo "🔄 Switching to Phase 2 Code..."
+git fetch origin
+git checkout feature/phase2-agentic-rag
+git pull origin feature/phase2-agentic-rag
+
 # Step 2: Ensure Environment
 if [ ! -f .env ]; then
     echo "⚠️  WARNING: .env file missing!"

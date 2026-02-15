@@ -6,6 +6,12 @@ echo 🛑 Stopping Phase 1 Services...
 docker-compose down
 
 echo.
+echo 🔄 Switching to Phase 2 Branch...
+git fetch origin
+git checkout feature/phase2-agentic-rag
+git pull origin feature/phase2-agentic-rag
+
+echo.
 echo ⚙️  Ensuring Phase 2 Environment...
 rem Check if .env exists, if not copy example
 if not exist .env copy .env.example .env
