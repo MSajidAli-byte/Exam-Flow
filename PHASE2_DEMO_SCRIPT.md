@@ -1,126 +1,104 @@
 # 🎥 Exam-Flow Phase 2: Client Demo & Handover Script
 
-**Goal:** Demonstrate the transition from Phase 1 (Linear AI) to Phase 2 (Agentic Multi-Modal Architecture), highlighting the robust backend, RAG integration, and scientific validation.
+**Goal:** Demonstrate the seamless upgrade from Phase 1 to Phase 2 (Agentic Architecture), showcasing both Production (Docker) and Development (IDE) workflows.
+
+**Note:** This script file is ignored by git (`.gitignore`) so it won't clutter the repo.
 
 ---
 
-## 🎬 Scene 1: Introduction & Documentation
+## 🎬 Scene 1: Introduction & New Documentation
 
 **Action:**
 
 1. Open VS Code.
-2. Close all tabs except `PHASE2_CLIENT_HANDOVER.md`.
-3. Close the terminal panel for a clean view.
+2. Open `PHASE2_UPGRADE_GUIDE.md`.
+3. Scroll through the headers.
 
 **Voiceover:**
-"Welcome to the Phase 2 delivery of Exam-Flow. In this demo, we'll transition the system from the linear Phase 1 prototype to the fully autonomous, multi-agent architecture we've built. We'll follow the exact steps documented in `PHASE2_CLIENT_HANDOVER.md`, which serves as your primary guide for deployment."
+"Welcome to the Phase 2 delivery. We have prepared a comprehensive `PHASE2_UPGRADE_GUIDE.md` which serves as your primary manual. It covers everything from stopping your old containers, pulling the new agentic branch, to setting up your local IDE environment for development."
 
 ---
 
-## 🎬 Scene 2: Configuration & The "Switch"
+## 🎬 Scene 2: The "Hybrid" Architecture
 
 **Action:**
 
-1. Open `.env` file (or show a dummy one if sensitive).
-2. Highlight the `PHASE` and `AGENTIC_MODE` variables.
+1. Scroll to **"Step 2: Set Up Local Development Environment"** in the guide.
+2. Scroll to **"Advanced: Local Development (Hybrid Workflow)"**.
 
 **Voiceover:**
-"The shift to Phase 2 is controlled by simple environment flags. We set `PHASE=2` and `AGENTIC_MODE=on`. This tells the backend to bypass the simple linear grader and instead engage the Agent Orchestrator, which manages our team of four specialized AI agents."
+"A key feature of Phase 2 is flexibility. While production runs on strictly containerized Docker services, we've enabled a 'Hybrid Mode' for developers. The guide details how to run the backend agents locally in your IDE (using `uvicorn`) while keeping the heavy database services in Docker. This gives you instant code feedback without rebuilding containers."
 
 ---
 
-## 🎬 Scene 3: The New Architecture (Code Walkthrough)
+## 🎬 Scene 3: The Codebase & Agents
 
 **Action:**
 
-1. Open the file explorer to `services/backend/agents/`.
-2. Click and show `orchestrator.py`.
-3. Briefly click `visual_proctor.py`, `code_reviewer.py`, `integrity_auditor.py`.
-4. Open `services/backend/rag/rag_manager.py`.
+1. Open `services/backend/agents/orchestrator.py`.
+2. Show the `run_analysis` method.
+3. Open `services/backend/rag/rag_manager.py`.
 
 **Voiceover:**
-"Before we run it, let's look at the new engine.
-
-- Here in the `agents` folder, you see the specialized workforce: The **Visual Proctor** for behavioral analysis, the **Code Reviewer** for technical grading, and the **Integrity Auditor** which cross-references them.
-- They are coordinated by this **Orchestrator** (`orchestrator.py`).
-- And crucially, we've added **RAG (Retrieval Augmented Generation)** here in `rag_manager.py`. This connects the AI to a 'Gold Standard' library of ideal solutions, ensuring grading is based on facts, not hallucinations."
+"Under the hood, the system is now driven by this **Orchestrator**. It coordinates specialized agents—Visual Proctor, Code Reviewer, and Integrity Auditor.
+And crucially, here is the RAG Manager. Phase 2 introduces a persistent vector database to store 'Ideal Solutions', ensuring that grading is grounded in factual references."
 
 ---
 
-## 🎬 Scene 4: Deployment & Initialization
+## 🎬 Scene 4: Deployment (The Happy Path)
 
 **Action:**
 
-1. Open the Integrated Terminal.
-2. Run: `docker-compose down`
-3. Run: `docker-compose up --build -d`
-4. Wait for the logs: `Attaching to exam-flow-backend-1...`
+1. Open Integrated Terminal.
+2. Run: `docker-compose up --build -d`.
+3. Wait for logs: `✔ Container exam-flow-backend-1  Started`.
 
 **Voiceover:**
-"We'll now spin up the new architecture using Docker Compose. This rebuilds the containers to include the new dependencies like ChromaDB for our vector memory."
+"For deployment, we follow the 'Critical' step 4 in the guide: a full Docker rebuild. This ensures the new dependencies—like ChromaDB and the headless OpenCV proctor—are correctly installed."
 
 **Action:**
-5.  Once running, execute the RAG initialization command:
-    `docker exec exam-flow-backend-1 python init_rag.py`
+4.  Run: `docker exec exam-flow-backend-1 python init_rag.py`.
 
 **Voiceover:**
-"This is a critical Phase 2 step. We are initializing the Expert Knowledge Base. You can see it's adding 'Gold Standard' solutions for Java, Docker, and Python into our vector database. The agents will reference these during grading."
+"And finally, we initialize the Expert Knowledge Base. This one-time command populates the vector database with our gold-standard examples."
 
 ---
 
-## 🎬 Scene 5: The "Solution Package" Demo (ZIP Upload)
+## 🎬 Scene 5: Feature Demo - "Solution Package" (ZIP)
 
 **Action:**
 
-1. Open browser to `http://localhost:8501`.
-2. Select **"Solution Package (ZIP)"**.
-3. Upload `case1_standard_success.zip`.
-4. Click **"Analyze Solution Package"**.
-5. Switch back to VS Code Terminal **briefly** to show the logs scrolling (`Agent A starting... Agent B starting...`).
-6. Switch back to UI to show the final report.
+1. Open browser (`http://localhost:8501`).
+2. Upload `case1_standard_success.zip`.
+3. Click **Analyze**.
+4. Show resulting breakdown: Technical Score, Management Score, Integrity Status.
 
 **Voiceover:**
-"Let's test the full pipeline. Phase 2 supports a 'Solution Package' upload—containing video, code, and context files.
-As the analysis runs, you can see on the backend that the agents are firing sequentially: Visual Proctor first, then Code Reviewer, then the Integrity Audit.
+"Let's see it in action. The new 'Solution Package' upload processes video, code, and context simultaneously.
 ...
-And here is the result. Notice the detailed breakdown: A separate technical score, a management score, and a specific Integrity Status. The system has certified this submission."
+The result is a holistic evaluation. The Integrity Status is 'Certified', meaning the Visual Proctor confirmed the candidate's presence throughout the exam."
 
 ---
 
-## 🎬 Scene 6: Single Video Fallback (Restored Feature)
+## 🎬 Scene 6: Feature Demo - "Single Video" (Restored)
 
 **Action:**
 
-1. Refresh page or clear upload.
-2. Select **"Single Video"**.
-3. Upload `Java_Demo_Exam-Flow.mp4`.
-4. Show the result (likely Flagged for Sudden Logic/Pasting).
+1. Select **"Single Video"** mode.
+2. Upload `Java_Demo_Exam-Flow.mp4`.
+3. Show the result (likely 20/100 Flagged).
 
 **Voiceover:**
-"We've also maintained backward compatibility for Single Video uploads. In this mode, the Code Reviewer automatically switches to 'Visual Analysis'—literally reading the code from the screen.
-However, notice the strictness of Phase 2: because this demo video shows code appearing instantly, the Integrity Auditor flags it as 'Sudden Logic' or pasting, and caps the score. This demonstrates the new security protocols in action."
+"We've also restored the 'Single Video' upload for backwards compatibility. In this mode, the Code Reviewer switches to 'Visual Analysis'—OCR-reading code from the screen.
+However, notice the strictness: because this demo video shows code appearing instantly (pasting), the system correctly flags it as 'Sudden Logic' and caps the score. This proves the new integrity engine is active and rigorous."
 
 ---
 
-## 🎬 Scene 7: Scientific Validation (Optional/Power User)
+## 🎬 Scene 7: Conclusion
 
 **Action:**
 
-1. Go back to VS Code.
-2. Open `research/evaluate_system.py`.
-3. Show the `GROUND_TRUTH` dictionary.
-4. Run: `python research/evaluate_system.py` (Let it run for 10s then stop, or show pre-run results).
+1. Return to `PHASE2_UPGRADE_GUIDE.md`.
 
 **Voiceover:**
-"Finally, Phase 2 isn't just code; it's research. We've included this `evaluate_system.py` script. It runs the AI against a battery of 7 known test cases—cheaters, innocent students, and edge cases—to scientifically calculate the system's Precision and Recall. This confirms the system is statistically accurate, not just guessing."
-
----
-
-## 🎬 Scene 8: Conclusion
-
-**Action:**
-
-1. Show the `PHASE2_CLIENT_HANDOVER.md` again.
-
-**Voiceover:**
-"The entire Phase 2 system—Files, Docker config, and RAG database—is fully packaged and ready for handover. You can follow the guide to deploy this immediately."
+"Everything you see here—the agentic backend, the RAG database, and the hybrid dev tools—is documented and ready in the repository. You can proceed with the upgrade immediately."
