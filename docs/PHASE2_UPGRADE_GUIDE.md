@@ -175,3 +175,16 @@ When running locally, the **RAG Database** (`chroma_db`) and **Uploads** (`uploa
 3. The sidebar should show **"Phase 2: Agentic Mode Active"**.
 
 You are now running the full Phase 2 architecture!
+
+---
+
+## ❓ Troubleshooting: Why is `chroma_db` empty?
+
+You might notice the `services/backend/chroma_db` folder in your IDE is empty or grayed out. **This is normal.**
+
+- **Reason:** We use **Docker Volumes** for performance and persistence. The database lives inside the Docker container at `/app/chroma_db`, not on your local Windows filesystem.
+- **To Verify Data:** Run this command to inspect the database inside the container:
+
+  ```bash
+  docker exec exam-flow-backend-1 python check_rag_db.py
+  ```

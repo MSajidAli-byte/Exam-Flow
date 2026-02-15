@@ -64,5 +64,5 @@ temp/
 *.tmp
 
 # Documentation Scripts (Local Only)
-PHASE2_DEMO_SCRIPT.md
+docs/PHASE2_DEMO_SCRIPT.md
 
