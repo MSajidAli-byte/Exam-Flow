@@ -32,6 +32,7 @@ class AgentOrchestrator:
         print("🚀 Agent B (Code Reviewer) starting analysis...")
         code_report = self.code_reviewer.run({
             "source_code": source_code,
+            "video_path": video_data.get("video_path"),
             "rubric": f"{rubric}\n\n{ideal_context}"
         })
         

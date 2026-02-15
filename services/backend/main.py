@@ -181,6 +181,8 @@ async def analyze_package(
     try:
         # Process Package
         package_info = PackageProcessor.process_zip(zip_path, package_dir)
+        print(f"📦 Extracted Package Info: {package_info}")
+        
         source_code = PackageProcessor.read_file(package_info["code"])
         context = PackageProcessor.read_file(package_info["context"])
         
@@ -189,6 +191,7 @@ async def analyze_package(
         
         behavioral_flags = []
         video_path = package_info["video"]
+        print(f"🎥 Video Path for Proctoring: {video_path}")
         
         if video_path and enable_proctoring:
             behavioral_flags = proctor.analyze_behavior(video_path)

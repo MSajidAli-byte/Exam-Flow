@@ -65,9 +65,16 @@ Instead of just a video, you can now upload a **ZIP** file containing:
 2. The Solution Source Code (.java, .py, etc.)
 3. An optional `context.txt` (Providing specific exam instructions).
 
+**Restored Feature: Single Video Upload**
+
+* You can still upload a **Single Video** (.mp4).
+* The **Code Reviewer Agent** will automatically switch to **"Visual Analysis Mode"** to extract and grade the code visible on screen.
+* **Note**: If the code appears instantly (e.g. pasted), the Integrity Auditor will likely flag it as **"Sudden Logic"** and cap the score at 20/100.
+
 ### **Research-First Logging**
 
 The backend now captures:
+
 * **Agent Confidence Scores** (For validity studies).
 * **Integrity Audit Logs** (Flagging "Sudden Logic" while the candidate's face was missing).
 

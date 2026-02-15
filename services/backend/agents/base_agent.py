@@ -24,8 +24,8 @@ class BaseAgent:
         self.model_name = model_name or self.MODEL_FALLBACK_ORDER[0]
         self.model = genai.GenerativeModel(self.model_name)
 
-    def generate_response(self, prompt: str) -> str:
-        """Generate response with automatic model fallback on quota errors."""
+    def generate_response(self, prompt: Any) -> str:
+        """Generate response with automatic model fallback on quota errors. Supports text or multimodal input."""
         for attempt, model_name in enumerate(self.MODEL_FALLBACK_ORDER):
             try:
                 # Switch to next model in fallback chain
@@ -34,6 +34,7 @@ class BaseAgent:
                     self.model = genai.GenerativeModel(model_name)
                     self.model_name = model_name
                 
+                # Pass prompt (string or list) directly to generate_content
                 response = self.model.generate_content(prompt)
                 
                 # Success! Log which model worked

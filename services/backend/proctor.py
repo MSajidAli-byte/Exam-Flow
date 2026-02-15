@@ -35,7 +35,10 @@ class ProctorEngine:
         Analyzes behavioral patterns using OpenCV face/eye detection.
         Detects: face absence, looking away, eye closure patterns.
         """
+        print(f"👁️ ProctorEngine: Analyzing {video_path}")
+        
         if not self.face_cascade:
+            print("⚠️ ProctorEngine: Haarcascade not loaded.")
             return [{
                 "timestamp": "00:00", 
                 "issue": "Proctoring module disabled (OpenCV Haar Cascade not available)", 
@@ -43,8 +46,13 @@ class ProctorEngine:
             }]
 
         try:
+            if not os.path.exists(video_path):
+                print(f"❌ ProctorEngine: Video path does not exist: {video_path}")
+                return []
+
             cap = cv2.VideoCapture(video_path)
             if not cap.isOpened():
+                print(f"❌ ProctorEngine: Could not open video file: {video_path}")
                 return [{
                     "timestamp": "00:00",
                     "issue": f"Could not open video file: {video_path}",
@@ -52,8 +60,7 @@ class ProctorEngine:
                 }]
             
             fps = cap.get(cv2.CAP_PROP_FPS)
-            if fps <= 0: 
-                fps = 30
+            if fps <= 0: fps = 30
             
             frame_count = 0
             flags = []
@@ -62,13 +69,14 @@ class ProctorEngine:
             total_samples = 0
             samples_with_faces = 0
             
-            # Sample every 2 seconds to balance accuracy and performance
+            # Sample every 2 seconds
             sample_interval = int(fps * 2)
+            print(f"🎥 ProctorEngine: Processing video at {fps} FPS, interval {sample_interval}")
 
             while cap.isOpened():
                 success, frame = cap.read()
                 if not success:
-                    break
+                    break  # End of video
 
                 frame_count += 1
                 
@@ -85,25 +93,14 @@ class ProctorEngine:
                 
                 # Detect faces
                 faces = self.face_cascade.detectMultiScale(
-                    gray, 
-                    scaleFactor=1.1, 
-                    minNeighbors=5, 
-                    minSize=(30, 30)
+                    gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30)
                 )
 
                 if len(faces) > 0:
                     samples_with_faces += 1
-
-                if len(faces) == 0:
+                else: 
+                    # Logic for face absence...
                     consecutive_no_face += 1
-                    consecutive_no_eyes = 0
-                    
-                if len(faces) == 0:
-                    consecutive_no_face += 1
-                    consecutive_no_eyes = 0
-                    
-                    # Flag if face is missing for more than 3 consecutive samples (6+ seconds)
-                    # Increased threshold slightly to prevent noise but still catch absences
                     if consecutive_no_face >= 3:
                         flags.append({
                             "timestamp": timestamp_str,
@@ -111,48 +108,35 @@ class ProctorEngine:
                             "severity": "High"
                         })
                         consecutive_no_face = 0
-                else:
+
+                # (Eye detection logic skipped for brevity, assumed existing logic holds)
+                if len(faces) > 0:
                     consecutive_no_face = 0
-                    
-                    # Check for eyes within detected face
+                    # Face found, check eyes...
                     for (x, y, w, h) in faces:
-                        roi_gray = gray[y:y+h, x:x+w]
-                        
-                        # Use more sensitive scaleFactor for small eyes in PiP
-                        eyes = self.eye_cascade.detectMultiScale(
-                            roi_gray, 
-                            scaleFactor=1.05, 
-                            minNeighbors=4,    
-                            minSize=(15, 15)
-                        )
-                        
-                        # Fallback for eyeglasses
-                        if len(eyes) == 0 and self.glass_cascade is not None:
-                            eyes = self.glass_cascade.detectMultiScale(
-                                roi_gray,
-                                scaleFactor=1.05,
-                                minNeighbors=3,
-                                minSize=(15, 15)
-                            )
-                        
-                        # Detection Logic: Flag if eyes/glasses are missing for multiple samples
-                        # Removed the >100px restriction to support smaller webcam windows
-                        if len(eyes) == 0:
-                            consecutive_no_eyes += 1
-                            if consecutive_no_eyes >= 3:
+                         roi_gray = gray[y:y+h, x:x+w]
+                         eyes = self.eye_cascade.detectMultiScale(roi_gray, scaleFactor=1.05, minNeighbors=4, minSize=(15, 15))
+                         if len(eyes) == 0 and self.glass_cascade:
+                             eyes = self.glass_cascade.detectMultiScale(roi_gray, scaleFactor=1.05, minNeighbors=3, minSize=(15, 15))
+                         
+                         if len(eyes) == 0:
+                             consecutive_no_eyes += 1
+                             if consecutive_no_eyes >= 3:
                                 flags.append({
-                                    "timestamp": timestamp_str,
-                                    "issue": "Suspected Gaze Aversion (Looking away from screen)",
+                                    "timestamp": timestamp_str, 
+                                    "issue": "Suspected Gaze Aversion", 
                                     "severity": "Medium"
                                 })
                                 consecutive_no_eyes = 0
-                        else:
-                            consecutive_no_eyes = 0
+                         else:
+                             consecutive_no_eyes = 0
 
             cap.release()
+            print(f"✅ ProctorEngine: Analysis complete. Processed {total_samples} frames. Faces found in {samples_with_faces} samples.")
             
-            # Check if this is a screen recording (no faces detected at all)
+            # Check for screen-only
             if total_samples > 0 and samples_with_faces == 0:
+                print("⚠️ ProctorEngine: Screen-only recording detected.")
                 return [{
                     "timestamp": "00:00",
                     "issue": "Screen-only recording detected - No webcam/face visible. Behavioral proctoring not applicable.",
@@ -160,16 +144,18 @@ class ProctorEngine:
                 }]
             
             if not flags:
+                print("✅ ProctorEngine: No anomalies detected.")
                 flags.append({
                     "timestamp": "00:00",
                     "issue": "No behavioral anomalies detected",
                     "severity": "Info"
                 })
             
+            print(f"🚩 ProctorEngine: Generated {len(flags)} flags.")
             return flags
             
         except Exception as e:
-            print(f"❌ Proctoring analysis failed: {e}")
+            print(f"❌ ProctorEngine: Analysis failed: {e}")
             return [{
                 "timestamp": "00:00",
                 "issue": f"Analysis error: {str(e)}",

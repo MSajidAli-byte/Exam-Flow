@@ -8,31 +8,53 @@ class PackageProcessor:
     
     @staticmethod
     def process_zip(zip_path: str, extract_dir: str) -> Dict[str, str]:
-        """Extracts ZIP and returns paths to key files."""
+        """Extracts ZIP and returns paths to key files (recursively searching)."""
         os.makedirs(extract_dir, exist_ok=True)
         
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(extract_dir)
             
-        files = os.listdir(extract_dir)
         result = {
             "video": None,
             "code": None,
             "context": None
         }
         
-        for file in files:
-            ext = os.path.splitext(file)[1].lower()
-            if ext in ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.flv']:
-                result["video"] = os.path.join(extract_dir, file)
-            elif ext in ['.java', '.py', '.js', '.yaml', '.yml', '.txt']:
-                # For now, we assume .txt without 'context' in name is code, 
-                # or we just grab the first one.
-                if 'context' in file.lower():
-                    result["context"] = os.path.join(extract_dir, file)
-                else:
-                    result["code"] = os.path.join(extract_dir, file)
-                    
+        # Recursively walk to find files even if nested in folders
+        for root, dirs, files in os.walk(extract_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
+                ext = os.path.splitext(file)[1].lower()
+                
+                # Check for Video
+                if ext in ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.flv']:
+                    # Prioritize video if multiple found, or just take first
+                    if not result["video"]:
+                        result["video"] = file_path
+                
+                # Check for Code or Context
+                elif ext in ['.java', '.py', '.js', '.yaml', '.yml', '.txt', '.md', '.c', '.cpp', '.cs']:
+                    # Explicit context identification
+                    if 'context' in file.lower() or 'instruction' in file.lower() or 'readme' in file.lower():
+                        result["context"] = file_path
+                    # Code identification (avoid overwriting if we already found a 'better' code file)
+                    elif ext not in ['.txt', '.md']:
+                        result["code"] = file_path
+                    # Fallback for text files if no code found yet
+                    elif not result["code"] and not result["context"]:
+                        # Could be code in .txt? Rare but possible
+                        pass
+        
+        # Final pass: If we found code but no context, and have a .txt left over, use it as context
+        if result["code"] and not result["context"]:
+             for root, dirs, files in os.walk(extract_dir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    ext = os.path.splitext(file)[1].lower()
+                    if ext == '.txt' and file_path != result["code"]:
+                        result["context"] = file_path
+                        break
+
         return result
 
     @staticmethod

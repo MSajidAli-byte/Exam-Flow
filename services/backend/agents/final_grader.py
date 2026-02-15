@@ -6,7 +6,7 @@ class FinalGraderAgent(BaseAgent):
     
     def run(self, input_data: Dict[str, Any]) -> str:
         audit_report = input_data.get("audit_report", "")
-        code_score = input_data.get("code_score", "0")
+        code_report = input_data.get("code_report", "No technical analysis provided.")
         
         prompt = f"""
 You are the CHIEF ASSESSMENT AI. Your role is to produce the final academic verdict.
@@ -14,13 +14,14 @@ You are the CHIEF ASSESSMENT AI. Your role is to produce the final academic verd
 **INTEGRITY AUDIT REPORT:**
 {audit_report}
 
-**PRELIMINARY TECHNICAL SCORE:**
-{code_score}
+**PRELIMINARY TECHNICAL REPORT:**
+{code_report}
 
 **TASKS:**
-1. Determine the final score. 
-2. **IMPORTANT**: If the Audit Report shows a FAIL, the maximum score allowed is 20/100, regardless of technical quality.
-3. Write a professional executive summary for the professor/instructor.
+1. Extract the Technical Score from the Preliminary Report.
+2. Determine the Final Grade based on Integrity Audit + Technical Score.
+3. **IMPORTANT**: If the Audit Report shows a FAIL, the maximum score allowed is 20/100.
+4. Write a professional executive summary for the professor/instructor.
 
 **OUTPUT FORMAT:**
 - FINAL GRADE: [X/100]
