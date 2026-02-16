@@ -187,7 +187,15 @@ async def analyze_package(
         context = PackageProcessor.read_file(package_info["context"])
         
         # Combine contextual info into rubric if needed
-        rubric = custom_rubric or (f"Evaluate based on: {context}" if context else "Standard Technical Assessment")
+        # Combine contextual info: UI Text Area + File Context
+        rubric_parts = []
+        if custom_rubric and custom_rubric.strip():
+            rubric_parts.append(f"INSTRUCTOR GUIDELINES:\n{custom_rubric}")
+        
+        if context and context.strip():
+            rubric_parts.append(f"PROJECT README/CONTEXT:\n{context}")
+            
+        rubric = "\n\n".join(rubric_parts) if rubric_parts else "Standard Technical Assessment"
         
         behavioral_flags = []
         video_path = package_info["video"]

@@ -36,10 +36,9 @@ chmod +x upgrade_phase2.sh
 
 Full documentation has been organized into the `docs/` folder:
 
-- **[PHASE2_UPGRADE_GUIDE.md](docs/PHASE2_UPGRADE_GUIDE.md)**: Detailed step-by-step manual upgrade instructions.
-- **[PHASE2_CLIENT_HANDOVER.md](docs/PHASE2_CLIENT_HANDOVER.md)**: Feature overview for the client.
+- **[PHASE2_MANUAL.md](docs/PHASE2_MANUAL.md)**: Simplified setup, usage, and troubleshooting guide.
+- **[WORKFLOW_ARCHITECTURE.md](docs/WORKFLOW_ARCHITECTURE.md)**: Visual diagram of Agents, RAG, and Data Flow.
 - **[RESEARCH_PAPER_STRUCTURE.md](docs/RESEARCH_PAPER_STRUCTURE.md)**: Blueprint for academic publication (No humans required).
-- **[PHASE2_RESEARCH_PROTOCOL.md](docs/PHASE2_RESEARCH_PROTOCOL.md)**: Scientific validation metrics.
 
 ---
 

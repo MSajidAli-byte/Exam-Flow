@@ -288,11 +288,11 @@ with col1:
     }
     
     custom_rubric = st.text_area(
-        "Custom Grading Rubric (Optional)", 
+        "Exam Context / Instructions / Rubric", 
         value="",
-        placeholder=rubric_placeholders.get(assessment_type, ""),
-        height=100,
-        help="Leave BLANK to use the built-in strict rubric. Or enter custom criteria to override."
+        placeholder="Paste the exam problem statement, specific constraints, or grading rubric here...",
+        height=150,
+        help="This text will be used as the primary instruction for the AI Grader."
     )
 
     # Proctoring Toggle

@@ -67,9 +67,34 @@ Instead of just a video, you can now upload a **ZIP** file containing:
 
 **Restored Feature: Single Video Upload**
 
-* You can still upload a **Single Video** (.mp4).
-* The **Code Reviewer Agent** will automatically switch to **"Visual Analysis Mode"** to extract and grade the code visible on screen.
-* **Note**: If the code appears instantly (e.g. pasted), the Integrity Auditor will likely flag it as **"Sudden Logic"** and cap the score at 20/100.
+### 3. Visual Mode (Restored)
+
+- **Feature:** If a student uploads only a `.mp4` video (no code), the system will automatically switch to **Visual Analysis**.
+* **Action:** The Code Reviewer Agent uses Gemini Vision to read code directly from the screen.
+* **Integrity Policy:** If code appears instantly (e.g., in a single frame) without typing, it is flagged as **"Sudden Logic"** (Pasting), resulting in a score cap of 20/100.
+
+---
+
+## 📂 Exam Preparation: File Support
+
+You asked about restrictions. The system is designed to be flexible:
+
+### **Student Submissions (ZIP)**
+
+Students can zip their entire project folder. The system recursively scans for:
+* **Video:** `.mp4`, `.mov`, `.avi`, `.mkv` (Any format).
+* **Code:** `.java`, `.py`, `.js`, `.cpp`, `.cs`, `.c`, `.h`, `.ts`, `.go` (Unlimited number of files).
+* **Reports/Context:** `.txt`, `.md`, `.yaml`, `.yml`.
+  *(Note: PDF/Word reports are currently ignored. Please use text formats.)*
+
+**No Strict Structure Required:** As long as files are inside the ZIP (even in subfolders), the AI will find and analyze them.
+
+### **Where are the "Ideal Solutions" (RAG)?**
+
+These are stored efficiently in the server's **Knowledge Base (ChromaDB)**, not in individual ZIPs.
+* You initialize the library ONCE using `init_rag.py`.
+* The AI references this internal library for grading.
+* Student submissions do NOT need to include the answer key.
 
 ### **Research-First Logging**
 
