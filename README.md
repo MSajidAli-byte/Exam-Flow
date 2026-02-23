@@ -1,63 +1,114 @@
-# Exam-Flow Phase 2: Agentic Multi-Modal Assessment 🎓
+# Exam-Flow: AI-Powered Assessment & Proctoring 🎓
 
-Welcome to the **Agentic Phase 2** release. This version transforms the platform from a linear grader into a robust multi-agent system with RAG (Retrieval Augmented Generation) for factual grading.
+Two phases. One codebase. Use the scripts below to switch between them.
 
 ---
 
-## 🚀 One-Click Upgrade (Start Here)
+## ⚡ Quick Start
 
-We have automated the entire transition process. Run the script for your OS:
+### Upgrade to Phase 2 (Agentic + RAG)
 
-### **Windows**
-
-Double-click `upgrade_phase2.bat` or run in terminal:
+**Windows:**
 
 ```cmd
 .\upgrade_phase2.bat
 ```
 
-### **Linux / Mac**
+**Linux / Mac:**
 
 ```bash
-chmod +x upgrade_phase2.sh
-./upgrade_phase2.sh
+chmod +x upgrade_phase2.sh && ./upgrade_phase2.sh
 ```
 
-**What this script does:**
+### Roll Back to Phase 1 (Single LLM)
 
-1. Stops old Phase 1 containers.
-2. Updates your `.env` for Agentic Mode.
-3. Rebuilds the system with new dependencies (ChromaDB, OpenCV Headless).
-4. Initializes the Expert Knowledge Base (RAG).
+**Windows:**
+
+```cmd
+.\rollback_phase1.bat
+```
+
+**Linux / Mac:**
+
+```bash
+chmod +x rollback_phase1.sh && ./rollback_phase1.sh
+```
+
+---
+
+## 🐳 Docker: When to Rebuild?
+
+You do **not** need to rebuild from scratch every time you switch phases.
+
+| Situation | Command |
+| :--- | :--- |
+| First time running a phase | `docker-compose up -d --build` |
+| Switching back to a phase you've run before | `docker-compose up -d` (uses cached image) |
+| You edited code in `services/` and want it reflected | `docker-compose up -d --build` |
+
+The rollback and upgrade scripts handle this automatically.
+
+---
+
+## 🧠 RAG Knowledge Base (Phase 2 Only)
+
+The RAG database stores your "Ideal Solutions." Initialize it once after upgrading to Phase 2.
+
+**Initialize with built-in examples (Java OOP, Docker, Python Factorial):**
+
+```bash
+docker exec exam-flow-backend-1 python init_rag.py
+```
+
+**Verify the database is populated:**
+
+```bash
+docker exec exam-flow-backend-1 python check_rag_db.py
+```
+
+**Add a custom solution via API (no restart needed):**
+
+```bash
+curl -X POST http://localhost:8000/library/upload \
+  -H "Content-Type: application/json" \
+  -d '{
+    "solution_id": "java_factorial_001",
+    "code": "public static int factorial(int n) { return n <= 1 ? 1 : n * factorial(n-1); }",
+    "context": "Recursive factorial implementation in Java.",
+    "category": "Java"
+  }'
+```
+
+> **Note:** The RAG database persists in a Docker Volume. Switching branches does not erase it.
+> To reset it completely: `docker volume rm exam-flow_chroma_db`
 
 ---
 
 ## 📂 Documentation
 
-Full documentation has been organized into the `docs/` folder:
-
-- **[PHASE2_MANUAL.md](docs/PHASE2_MANUAL.md)**: Simplified setup, usage, and troubleshooting guide.
-- **[WORKFLOW_ARCHITECTURE.md](docs/WORKFLOW_ARCHITECTURE.md)**: Visual diagram of Agents, RAG, and Data Flow.
-- **[RESEARCH_PAPER_STRUCTURE.md](docs/RESEARCH_PAPER_STRUCTURE.md)**: Blueprint for academic publication (No humans required).
+- **[PHASE2_MANUAL.md](docs/PHASE2_MANUAL.md)**: Setup, usage, and supported file types.
+- **[WORKFLOW_ARCHITECTURE.md](docs/WORKFLOW_ARCHITECTURE.md)**: How the agents communicate.
+- **[RESEARCH_PAPER_STRUCTURE.md](docs/RESEARCH_PAPER_STRUCTURE.md)**: Academic publication blueprint.
 
 ---
 
-## 🏗️ Architecture Visualization
+## 🏗️ Phase 2 Agent Architecture
 
-The new system orchestrated by 4 specialized AI Agents:
+4 specialized agents orchestrated sequentially:
 
-1. **Visual Proctor Agent**: Analyzes behavioral video (Gaze/Face detection).
-2. **Code Reviewer Agent**: Grades syntax & logic (Text or Video OCR).
-3. **Integrity Auditor Agent**: Cross-references behavior with code timeline.
-4. **Final Grader Agent**: Synthesizes all reports into a final verdict.
+1. **Visual Proctor** — OpenCV face/gaze detection → LLM behavioral summary
+2. **Code Reviewer** — Reads submitted code + watches screen recording simultaneously
+3. **Integrity Auditor** — Cross-references screen events, code file, and behavioral flags
+4. **Final Grader** — Synthesizes all reports into one verdict with score
 
 ---
 
-## 🛠️ Advanced: Manual Developer Setup
+## 🛠️ Local Development (No Docker)
 
-If you prefer to run services locally (Hybrid Mode) instead of Docker:
+```bash
+# Backend
+cd services/backend && uvicorn main:app --reload
 
-1. **Backend**: `cd services/backend && uvicorn main:app --reload`
-2. **Frontend**: `cd services/frontend && streamlit run app.py`
-
-*See `docs/PHASE2_UPGRADE_GUIDE.md` for full local setup details.*
+# Frontend (separate terminal)
+cd services/frontend && streamlit run app.py
+```
