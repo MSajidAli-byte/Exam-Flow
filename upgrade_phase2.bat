@@ -1,40 +1,38 @@
 @echo off
-echo 🚀 UPGRADING TO EXAM-FLOW PHASE 2...
+title Exam-Flow: Upgrade to Phase 2
+color 0A
+echo.
+echo  =============================================
+echo    Exam-Flow ^| Upgrading to Phase 2 (RAG)
+echo  =============================================
 echo.
 
-echo 🛑 Stopping Phase 1 Services...
+echo  [1/5] Stopping current containers...
 docker-compose down
-
 echo.
-echo 🔄 Switching to Phase 2 Branch...
+
+echo  [2/5] Switching to Phase 2 branch...
 git fetch origin
 git checkout feature/phase2-agentic-rag
 git pull origin feature/phase2-agentic-rag
-
 echo.
-echo ⚙️  Ensuring Phase 2 Environment...
-rem Check if .env exists, if not copy example
-if not exist .env copy .env.example .env
-find /c "PHASE=2" .env > nul | find /c "0" > nul && echo PHASE=2>>.env
-find /c "AGENTIC_MODE=on" .env > nul | find /c "0" > nul && echo AGENTIC_MODE=on>>.env
 
-echo 🔑 REMINDER: Edit .env to add your GOOGLE_API_KEY if missing!
+echo  [3/5] Enabling Agentic Mode in .env...
+powershell -Command "(Get-Content .env) -replace 'AGENTIC_MODE=off','AGENTIC_MODE=on' | Set-Content .env"
 echo.
-pause
 
-echo 🏗️  Building Container Images (This may take a moment)...
-docker-compose up --build -d
-
+echo  [4/5] Building Phase 2 containers (first run takes 2-5 min)...
+docker-compose up -d --build
 echo.
-echo ⏳ Waiting for backend to start (10s)...
-timeout /t 10 /nobreak > nul
 
-echo.
-echo 🧠 Initializing RAG Knowledge Base...
+echo  [5/5] Initializing RAG Knowledge Base...
+timeout /t 10 /nobreak >nul
 docker exec exam-flow-backend-1 python init_rag.py
-
 echo.
-echo ✅ UPGRADE COMPLETE!
-echo Access the application at: http://localhost:8501
-echo To verify database: docker exec exam-flow-backend-1 python check_rag_db.py
+
+echo  =============================================
+echo    Phase 2 running at: http://localhost:8501
+echo    API Docs at:         http://localhost:8000/docs
+echo  =============================================
+echo.
 pause
