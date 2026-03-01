@@ -2,7 +2,7 @@ from .base_agent import BaseAgent
 from typing import Dict, Any
 
 class IntegrityAuditorAgent(BaseAgent):
-    """Agent C: The Integrity Auditor. Cross-references Visual Proctor flags, Code Review, and screen recording."""
+    """Agent C: The Integrity Auditor (Agent 3). Cross-references Visual Proctor flags, Code Review, and screen recording."""
     
     def run(self, input_data: Dict[str, Any]) -> str:
         visual_report = input_data.get("visual_report", "")

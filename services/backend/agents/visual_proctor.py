@@ -2,7 +2,7 @@ from .base_agent import BaseAgent
 from typing import Dict, Any
 
 class VisualProctorAgent(BaseAgent):
-    """Agent C: The Visual Proctor. Analyzes behavioral logs and video context."""
+    """Agent A: The Visual Proctor. Analyzes behavioral logs and video context."""
     
     def run(self, input_data: Dict[str, Any]) -> str:
         cv_context = input_data.get("cv_context", "No behavioral data provided.")
