@@ -17,13 +17,12 @@ def create_solution_package(case_id, video_source, code_content, context_content
         # Add context (instruction)
         zipf.writestr("context.txt", context_content)
 
-def generate_all_cases():
-    base_video = "Java_Demo_Exam-Flow.mp4" # Corrected filename
+def generate_all_cases(video_source="Java_Demo_Exam-Flow.mp4"):
     cases_dir = "research/cases"
     
     # Case 1: Standard Success (Java)
     create_solution_package(
-        "Case1", base_video,
+        "Case1", video_source,
         """
 public class Dog extends Animal {
     @Override
@@ -35,7 +34,7 @@ public class Dog extends Animal {
 
     # Case 2: Semantic Variation (Python Factorial)
     create_solution_package(
-        "Case2", base_video,
+        "Case2", video_source,
         """
 def compute_factorial(val):
     res = 1
@@ -51,7 +50,7 @@ def compute_factorial(val):
 
     # Case 3: Sudden Logic (Cheating Simulation)
     create_solution_package(
-        "Case3", base_video,
+        "Case3", video_source,
         """
 # Extremely complex code that appeared instantly
 def solve_n_queens(n):
@@ -71,7 +70,7 @@ def solve_n_queens(n):
 
     # Case 5: Library-Blind (Public Plagiarism)
     create_solution_package(
-        "Case5", base_video,
+        "Case5", video_source,
         """
 # Identical to a famous GeeksForGeeks solution not in RAG
 def bubbleSort(arr):
@@ -87,7 +86,7 @@ def bubbleSort(arr):
 
     # Case 4: Gaze Deviation (Distraction)
     create_solution_package(
-        "Case4", base_video,
+        "Case4", video_source,
         """
 def slow_logic():
     # Simple code produced while student is looking away
@@ -101,7 +100,7 @@ def slow_logic():
 
     # Case 6: Keyboard Warrior (Logical Gibberish)
     create_solution_package(
-        "Case6", base_video,
+        "Case6", video_source,
         """
 def gibberish():
     a = 1
@@ -118,7 +117,7 @@ def gibberish():
 
     # Case 7: False Positive Trap (Legitimate Thinking)
     create_solution_package(
-        "Case7", base_video,
+        "Case7", video_source,
         """
 def complex_math(n):
     # Student is slow, pondering, looking around

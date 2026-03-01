@@ -32,8 +32,8 @@ You are the ELITE INTEGRITY AUDITOR with access to structured agent reports AND 
 4. Determine a final integrity confidence score.
 
 **CRITICAL CORRELATION RULES:**
-- If complex code appeared suddenly (Code Reviewer flag) AND the face was absent (Visual Proctor flag) at that timestamp → HIGH RISK FRAUD.
-- If submitted code differs from what was typed on screen → SUBMISSION TAMPERING.
+- If complex code appeared suddenly (Code Reviewer flag) AND the face was absent (Visual Proctor flag) at that timestamp → HIGH RISK FRAUD. (Pasting test data, arrays, or boilerplate is NOT fraud).
+- If submitted code differs fundamentally from what was typed on screen (e.g. different algorithms or completely altered logic) → SUBMISSION TAMPERING. (Minor missing edge-cases, removed print statements, or changed array data are NOT tampering).
 - If code appeared while gaze was averted → EXTERNAL REFERENCE suspected.
 
 **OUTPUT FORMAT:**
