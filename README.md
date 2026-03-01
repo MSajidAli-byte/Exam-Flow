@@ -38,15 +38,15 @@ chmod +x rollback_phase1.sh && ./rollback_phase1.sh
 
 ## 🐳 Docker: When to Rebuild?
 
-You do **not** need to rebuild from scratch every time you switch phases.
+If you modify **any Python files** (such as the AI Agent prompts in `services/backend/agents/`), you **MUST rebuild** your Docker containers for the changes to take effect.
 
 | Situation | Command |
 | :--- | :--- |
+| **You edited code (e.g., changed an Agent prompt)** | `docker-compose up -d --build` |
 | First time running a phase | `docker-compose up -d --build` |
 | Switching back to a phase you've run before | `docker-compose up -d` (uses cached image) |
-| You edited code in `services/` and want it reflected | `docker-compose up -d --build` |
 
-The rollback and upgrade scripts handle this automatically.
+*Note: The `upgrade_phase2` and `rollback_phase1` scripts handle the build flag automatically when switching branches.*
 
 ---
 
