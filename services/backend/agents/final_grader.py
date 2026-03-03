@@ -27,8 +27,16 @@ Synthesize these disparate reports into a SINGLE, high-fidelity, and professiona
 **Assessment Details:** [Subject From Rubric] | **System Instance:** Agentic Multimodal (Phase 2)
 ---
 
-## 📊 AI Technical Score
-**SCORE:** [X/100]
+## 📄 FINAL VERDICT SCORE & JUSTIFICATION
+**FINAL GRADE:** [X/100]
+**STATUS:** [Certified / Flagged / Failed]
+**EXECUTIVE SUMMARY:** [An exhaustive narrative explaining the final decision. Integrate findings from both technical and behavioral streams. **CRITICAL**: If the Integrity Audit is a FAIL or indicates FRAUD, the final grade MUST be capped at 20/100.]
+
+---
+
+## 📊 Technical Proficiency (Pre-Audit)
+**TECHNICAL SCORE:** [X/100]
+*(This score reflects the raw technical quality of the logic before integrity penalties are applied.)*
 
 ---
 
@@ -55,13 +63,6 @@ Synthesize these disparate reports into a SINGLE, high-fidelity, and professiona
 ## 🚨 BEHAVIORAL RED FLAGS
 [Explicitly list any discrepancies, gaze aversion, sudden logic, or tab switching with timestamps and estimated severity.]
 - [Timestamp] - [Flag Type] - [Severity (Low/Medium/High)] - [Context]
-
----
-
-## 📄 FINAL VERDICT SCORE & JUSTIFICATION
-**FINAL GRADE:** [X/100]
-**STATUS:** [Certified / Flagged / Failed]
-**EXECUTIVE SUMMARY:** [An exhaustive narrative explaining the final decision. Integrate findings from both technical and behavioral streams. **CRITICAL**: If the Integrity Audit is a FAIL or indicates FRAUD, the final grade MUST be capped at 20/100.]
 
 ---
 

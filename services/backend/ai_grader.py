@@ -9,11 +9,13 @@ from rag.rag_manager import RagManager
 class AIGrader:
     # Optimized for video analysis - Prioritizing Gemini 3 and 2.5 series
     MODEL_FALLBACK_ORDER = [
-        'models/gemini-2.5-flash',       # Primary: Latest 2.5 series (Verified)
-        'models/gemini-2.0-flash',       # Fallback 1: Proven 2.0 frontier (Verified)
-        'models/gemini-flash-latest',    # Fallback 2: Stable workhorse (Verified)
-        'models/gemini-3-flash-preview', # Fallback 3: Experimental
-        'models/gemini-pro-latest'       # Fallback 4: High quality fallback
+        'models/gemini-2.5-flash',
+        'models/gemini-3-flash-preview',
+        'models/gemini-2.5-flash-lite',
+        'models/gemini-2.0-flash-001',
+        'models/gemini-2.0-flash-lite-001',
+        'models/gemma-3-27b-it',
+        'models/gemini-flash-latest'
     ]
     
     def __init__(self, api_key: str):
@@ -236,16 +238,20 @@ You are a Senior Technical Interviewer evaluating a candidate's coding performan
 
             # Dynamic Fallback Loop
             tried_models = []
+            attempted_errors = {}
             for model_name in self.MODEL_FALLBACK_ORDER:
                 tried_models.append(model_name)
                 success = self.switch_model(model_name)
-                if not success: continue
+                if not success: 
+                    attempted_errors[model_name] = "Failed to switch model"
+                    continue
                 
                 try:
                     response = self.model.generate_content([video_file, prompt])
                     return response.text
                 except Exception as e:
                     error_msg = str(e)
+                    attempted_errors[model_name] = error_msg
                     # Handle both quota issues AND "Model Not Found" issues
                     if any(x in error_msg.lower() for x in ["429", "quota", "404", "not found", "supported"]):
                         print(f"⚠️ Model {model_name} failed or unavailable. Attempting fallback...")
@@ -254,16 +260,22 @@ You are a Senior Technical Interviewer evaluating a candidate's coding performan
                         raise e # Re-raise if it's a critical logic/auth error
 
             # If all models fail
+            error_details = "\n".join([f"- **{m}**: {t}" for m, t in attempted_errors.items()])
             return f"""
-# ❌ Quota Exhausted Across All Models
+# ❌ API Request Failed Across All Models
 
-The system attempted multiple models ({', '.join(tried_models)}) to bypass the Gemini API free-tier limits, but all are currently at their capacity.
+The system attempted multiple models but all encountered errors. This might not be a quota issue.
+
+**Error Details per Model:**
+{error_details}
+
 
 **Recommendations:**
-1. Wait 60 seconds (RPM limit) or 24 hours (Daily limit)
-2. Upgrade to a paid plan for unlimited production access
-3. Provide a fresh API key in the configuration
+1. Check the exact error message above (e.g., if a model is unsupported).
+2. If it is a 429 error, wait 60 seconds (RPM limit) or 24 hours (Daily limit).
+3. Provide a fresh API key in the configuration.
             """
+
 
         except Exception as e:
             return f"# ❌ Analysis Error\n\n**Details:** {str(e)}"

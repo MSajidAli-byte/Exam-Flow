@@ -9,12 +9,13 @@ class BaseAgent:
     # Priority order based on ACTUAL available models and quota limits
     # Strategy: Use stable 2.5/2.0 models, avoid experimental variants
     MODEL_FALLBACK_ORDER = [
-        'models/gemini-2.5-flash',        # Primary: Latest stable, 161K TPM, 2/5 RPM (from screenshot)
-        'models/gemini-2.0-flash',        # Fallback 1: Unlimited TPM, 0/15 RPD (fresh quota)
-        'models/gemini-flash-latest',     # Fallback 2: Alias to stable flash (48K TPM)
-        'models/gemini-2.5-pro',          # Fallback 3: Unlimited TPM, high reasoning
-        'models/gemini-pro-latest',       # Fallback 4: Stable pro alias
-        'models/gemini-2.0-flash-lite',   # Fallback 5: Lightweight, unlimited TPM
+        'models/gemini-2.5-flash',
+        'models/gemini-3-flash-preview',
+        'models/gemini-2.5-flash-lite',
+        'models/gemini-2.0-flash-001',
+        'models/gemini-2.0-flash-lite-001',
+        'models/gemma-3-27b-it',
+        'models/gemini-flash-latest'
     ]
     
     def __init__(self, model_name: str = None):
@@ -26,18 +27,16 @@ class BaseAgent:
 
     def generate_response(self, prompt: Any) -> str:
         """Generate response with automatic model fallback on quota errors. Supports text or multimodal input."""
+        attempted_errors = {}
         for attempt, model_name in enumerate(self.MODEL_FALLBACK_ORDER):
             try:
-                # Switch to next model in fallback chain
                 if attempt > 0:
                     print(f"🔄 Switching to fallback model: {model_name}")
                     self.model = genai.GenerativeModel(model_name)
                     self.model_name = model_name
                 
-                # Pass prompt (string or list) directly to generate_content
                 response = self.model.generate_content(prompt)
                 
-                # Success! Log which model worked
                 if attempt > 0:
                     print(f"✅ Success with {model_name}")
                 
@@ -45,27 +44,23 @@ class BaseAgent:
                 
             except Exception as e:
                 error_message = str(e)
+                attempted_errors[model_name] = error_message
                 
-                # Check if this is a quota error
-                if "429" in error_message or "quota" in error_message.lower():
-                    print(f"🛑 Quota exceeded for {model_name}")
-                    
-                    # If this was the last model, return error
+                if "429" in error_message or "quota" in error_message.lower() or "not found" in error_message.lower() or "supported" in error_message.lower():
+                    print(f"🛑 Error/Quota exceeded for {model_name}: {error_message[:100]}")
                     if attempt == len(self.MODEL_FALLBACK_ORDER) - 1:
-                        return f"ERROR: All models exhausted. Please wait 60 seconds and try again."
-                    
-                    # Otherwise, continue to next model
-                    time.sleep(2)  # Brief pause before trying next model
+                        error_details = "\\n".join([f"- **{m}**: {t}" for m, t in attempted_errors.items()])
+                        return f"ERROR: All models failed.\\n\\n**Details:**\\n{error_details}"
+                    time.sleep(2)
                     continue
                 
-                # For non-quota errors, try next model but log the error
                 print(f"⚠️ Error with {model_name}: {error_message[:100]}")
-                
                 if attempt == len(self.MODEL_FALLBACK_ORDER) - 1:
-                    return f"ERROR: All models failed. Last error: {error_message[:200]}"
-                
+                    error_details = "\\n".join([f"- **{m}**: {t}" for m, t in attempted_errors.items()])
+                    return f"ERROR: All models failed.\\n\\n**Details:**\\n{error_details}"
                 time.sleep(1)
                 continue
+
         
         return "ERROR: Unexpected fallback loop termination."
 
