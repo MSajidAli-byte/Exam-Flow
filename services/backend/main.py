@@ -38,6 +38,21 @@ async def upload_to_library(package: SolutionPackage):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/cache/clear")
+async def clear_analysis_cache(item_id: str = None):
+    """Wipes the analysis cache (full or specific item)."""
+    try:
+        rag_manager.clear_cache(item_id)
+        msg = f"Cache item {item_id} cleared." if item_id else "All cache cleared."
+        return {"status": "success", "message": msg}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/cache/list")
+async def list_cache():
+    """Lists all cached analyses."""
+    return rag_manager.list_cache()
+
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
@@ -197,6 +212,22 @@ async def analyze_package(
             
         rubric = "\n\n".join(rubric_parts) if rubric_parts else "Standard Technical Assessment"
         
+        # --- NEW: Phase 2 Analysis Caching ---
+        import hashlib
+        # Combine file content, rubric, and proctoring setting into a unique hash
+        hash_obj = hashlib.md5()
+        hash_obj.update(content)
+        hash_obj.update(str(rubric).encode())
+        hash_obj.update(str(enable_proctoring).encode())
+        file_hash = hash_obj.hexdigest()
+        
+        cached_result = rag_manager.get_cached_report(file_hash)
+        if cached_result:
+            print(f"💎 CACHE HIT: Returning pre-analyzed report for {file_hash}")
+            cached_result["source"] = "Cached Research Result"
+            return cached_result
+
+        # Run Analysis (If not cached)
         behavioral_flags = []
         video_path = package_info["video"]
         print(f"🎥 Video Path for Proctoring: {video_path}")
@@ -212,16 +243,34 @@ async def analyze_package(
             source_code=source_code
         )
         
-        # Cleanup
-        PackageProcessor.cleanup(package_dir)
+        # --- NEW: Integrity Guard (Don't cache if all models failed) ---
+        if "ERROR: All models failed" in report or "# ❌ API Request Failed" in report:
+            print("⚠️ System Failure detected. Returning raw error and skipping cache.")
+            return {
+                "type": assessment_type,
+                "report": report,
+                "behavioral_flags": [],
+                "source": "System Error (No Cache)"
+            }
         
-        return {
+        final_response = {
             "type": assessment_type,
             "report": report,
             "behavioral_flags": behavioral_flags,
             "has_code": bool(source_code),
-            "has_video": bool(video_path)
+            "has_video": bool(video_path),
+            "source": "Agentic Analysis (Fresh)",
+            "filename": file.filename
         }
+
+        # Save to Cache for next time
+        rag_manager.cache_report(file_hash, final_response)
+        
+        # Cleanup
+        PackageProcessor.cleanup(package_dir)
+        
+        return final_response
+
     except Exception as e:
         PackageProcessor.cleanup(package_dir)
         raise HTTPException(status_code=500, detail=str(e))

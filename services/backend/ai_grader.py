@@ -9,13 +9,14 @@ from rag.rag_manager import RagManager
 class AIGrader:
     # Optimized for video analysis - Prioritizing Gemini 3 and 2.5 series
     MODEL_FALLBACK_ORDER = [
-        'models/gemini-2.5-flash',
-        'models/gemini-3-flash-preview',
-        'models/gemini-2.5-flash-lite',
+        'models/gemini-1.5-flash',
+        'models/gemini-1.5-flash-latest',
+        'models/gemini-2.0-flash-exp',
         'models/gemini-2.0-flash-001',
         'models/gemini-2.0-flash-lite-001',
-        'models/gemma-3-27b-it',
-        'models/gemini-flash-latest'
+        'models/gemini-2.5-flash',
+        'models/gemini-2.5-flash-lite',
+        'models/gemini-3-flash-preview'
     ]
     
     def __init__(self, api_key: str):

@@ -30,7 +30,7 @@ Synthesize these disparate reports into a SINGLE, high-fidelity, and professiona
 ## 📄 FINAL VERDICT SCORE & JUSTIFICATION
 **FINAL GRADE:** [X/100]
 **STATUS:** [Certified / Flagged / Failed]
-**EXECUTIVE SUMMARY:** [An exhaustive narrative explaining the final decision. Integrate findings from both technical and behavioral streams. **CRITICAL**: If the Integrity Audit is a FAIL or indicates FRAUD, the final grade MUST be capped at 20/100.]
+**EXECUTIVE SUMMARY:** [An exhaustive narrative explaining the final decision. Integrate findings from both technical and behavioral streams. **CRITICAL INTEGRITY CAP**: If the Integrity Audit status is 'FAIL' or 'INVESTIGATION', or if it mentions any FRAUD (notes, phone, external AI), the final grade MUST be capped at **20/100** regardless of code quality. This is non-negotiable for research evaluations.]
 
 ---
 

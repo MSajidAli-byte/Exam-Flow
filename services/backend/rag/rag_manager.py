@@ -23,6 +23,12 @@ class RagManager:
                 embedding_function=self.embedding_fn,
                 metadata={"description": "Collection of gold-standard exam solutions"}
             )
+            # NEW: Global Cache Collection (Phase 2 Optimization)
+            self.cache_collection = self.client.get_or_create_collection(
+                name="analysis_cache",
+                # No embedding needed here as we use exact hash lookup
+                metadata={"description": "Hash-based cache for past reports"}
+            )
         except ValueError as e:
             # Handle conflict between 'default' and 'google_generative_ai' embedding functions
             if "conflict" in str(e).lower():
@@ -33,6 +39,7 @@ class RagManager:
                     embedding_function=self.embedding_fn,
                     metadata={"description": "Collection of gold-standard exam solutions (Reset for Gemini Embeddings)"}
                 )
+                self.cache_collection = self.client.get_or_create_collection(name="analysis_cache")
             else:
                 raise e
 
@@ -61,3 +68,71 @@ class RagManager:
         
         ideal_doc = results['documents'][0][0]
         return f"**IDEAL REFERENCE SOLUTION:**\n{ideal_doc}"
+
+    # --- NEW: CACHING LOGIC ---
+    def get_cached_report(self, file_hash: str) -> Dict[str, Any]:
+        """Checks if an analysis for this exact file/rubric hash already exists."""
+        try:
+            result = self.cache_collection.get(ids=[file_hash])
+            if result and result['metadatas']:
+                import json
+                return json.loads(result['metadatas'][0]['report_data'])
+        except Exception as e:
+            print(f"⚠️ Cache miss or error: {e}")
+        return None
+
+    def cache_report(self, file_hash: str, report_data: Dict[str, Any]):
+        """Saves a finished report to the cache collection."""
+        try:
+            import json
+            # CRITICAL: Do not cache if the report indicates an API/System error
+            report_text = report_data.get("report", "")
+            if "ERROR:" in report_text or "Quota exceeded" in report_text or "# ❌" in report_text:
+                print(f"⚠️ Skipping cache for report containing errors (Hash: {file_hash})")
+                return
+
+            self.cache_collection.upsert(
+                ids=[file_hash],
+                documents=[f"Report for hash {file_hash}"],
+                metadatas=[{"report_data": json.dumps(report_data)}]
+            )
+            print(f"✅ Report cached successfully (Hash: {file_hash})")
+        except Exception as e:
+            print(f"⚠️ Failed to cache report: {e}")
+
+    def clear_cache(self, item_id: str = None):
+        """Wipes the entire cache OR a specific item if item_id is provided."""
+        try:
+            if item_id:
+                self.cache_collection.delete(ids=[item_id])
+                print(f"🗑️ Specific cache item {item_id} cleared.")
+            else:
+                self.client.delete_collection("analysis_cache")
+                self.cache_collection = self.client.get_or_create_collection(
+                    name="analysis_cache",
+                    metadata={"description": "Hash-based cache for past reports"}
+                )
+                print("🗑️ Entire analysis cache cleared.")
+        except Exception as e:
+            print(f"⚠️ Failed to clear cache: {e}")
+
+    def list_cache(self) -> List[Dict[str, Any]]:
+        """Returns a list of all items currently in the analysis cache."""
+        try:
+            results = self.cache_collection.get()
+            cached_items = []
+            for i in range(len(results['ids'])):
+                import json
+                report_data = json.loads(results['metadatas'][i]['report_data'])
+                cached_items.append({
+                    "id": results['ids'][i],
+                    "type": report_data.get("type", "Unknown"),
+                    "filename": report_data.get("filename", "N/A"),
+                    "source": report_data.get("source", "Unknown"),
+                    # Add a snippet of the report to help identify it
+                    "preview": report_data.get("report", "")[:100] + "..."
+                })
+            return cached_items
+        except Exception as e:
+            print(f"⚠️ Failed to list cache: {e}")
+            return []

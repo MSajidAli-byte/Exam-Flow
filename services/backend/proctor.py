@@ -69,9 +69,10 @@ class ProctorEngine:
             total_samples = 0
             samples_with_faces = 0
             
-            # Sample every 2 seconds
-            sample_interval = int(fps * 2)
-            print(f"🎥 ProctorEngine: Processing video at {fps} FPS, interval {sample_interval}")
+            # ULTRA-FORENSIC: Sample every 0.2 seconds (5 samples per sec)
+            sample_interval = int(fps * 0.2)
+            if sample_interval < 1: sample_interval = 1
+            print(f"🎥 ProctorEngine: Ultra-Forensic (0.2s intervals) | FPS: {fps}")
 
             while cap.isOpened():
                 success, frame = cap.read()
@@ -121,11 +122,12 @@ class ProctorEngine:
                          
                          if len(eyes) == 0:
                              consecutive_no_eyes += 1
-                             if consecutive_no_eyes >= 3:
+                             # 2 consecutive samples at 0.2s = 0.4s of video time (Forensic Gaze Catch)
+                             if consecutive_no_eyes >= 2:
                                 flags.append({
                                     "timestamp": timestamp_str, 
-                                    "issue": "Suspected Gaze Aversion", 
-                                    "severity": "Medium"
+                                    "issue": "Micro-Gaze Aversion (Forensic Capture)", 
+                                    "severity": "High"
                                 })
                                 consecutive_no_eyes = 0
                          else:

@@ -6,21 +6,28 @@ class VisualProctorAgent(BaseAgent):
     
     def run(self, input_data: Dict[str, Any]) -> str:
         cv_context = input_data.get("cv_context", "No behavioral data provided.")
+        gemini_video_file = input_data.get("gemini_video_file", None)
         
-        prompt = f"""
-You are the VISUAL PROCTOR AGENT. Your role is to examine behavioral data detected by Computer Vision.
+        system_instructions = """
+You are the VISUAL BEHAVIOR EXPERT. Your role is to detect cheating by watching the candidate's physical actions and eye contact.
 
-**BEHAVIORAL DATA:**
+**INPUT SOURCES:**
+1. **CV FORENSIC LOGS (from OpenCV):** 
 {cv_context}
+2. **RAW VIDEO (If provided):** You can see the candidate's actual face through the webcam feed (usually a small PIP or overlay).
 
-**TASKS:**
-1. Identify specific timestamps where anomalous behavior occurred (gaze aversion, face missing, etc).
-2. Rate the intensity of these anomalies (Low, Medium, High).
-3. Provide a 'Visual Integrity Verdict'.
+**YOUR TASKS:**
+1. **Validation**: Confirm if the OpenCV 'Gaze Aversion' or 'Face Missing' flags are true.
+2. **Discovery**: Look for quick gaze shifts to the side (left/right of the screen) that OpenCV might have missed. 
+3. **Speed Awareness**: The video might be recorded at high speed (2x). Pay attention to any consistent pattern of looking away, even if brief.
+4. **Context**: Looking at the keyboard is usually normal. Looking 45 degrees away from the monitor consistently is a RED FLAG (external notes/phone).
 
 **OUTPUT FORMAT:**
 - VERDICT: [CLEAR/SUSPICIOUS/CRITICAL]
 - ANOMALY LOG: [MM:SS - Type - Intensity]
-- REASONING: [Brief explanation]
+- REASONING: [Explain exactly what you saw. "Candidate repeatedly looked to the left at X:XX"]
 """
-        return self.generate_response(prompt)
+        if gemini_video_file:
+            return self.generate_response([gemini_video_file, system_instructions.format(cv_context=cv_context)])
+        
+        return self.generate_response(system_instructions.format(cv_context=cv_context))

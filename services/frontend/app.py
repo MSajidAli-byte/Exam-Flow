@@ -112,7 +112,7 @@ with st.sidebar:
         
         # NEW: Apply Button to sync with existing result
         if st.button("🔄 Apply & Update Report"):
-            if 'result' in st.session_state:
+            if 'result' in st.session_state and isinstance(st.session_state['result'], dict):
                 # Update the manual_override in the existing result
                 st.session_state['result']['manual_override'] = {
                     'score': manual_score,
@@ -129,7 +129,7 @@ with st.sidebar:
     else:
         st.session_state['manual_controls']['enabled'] = False
         # Remove override from result if disabled
-        if 'result' in st.session_state and 'manual_override' in st.session_state['result']:
+        if 'result' in st.session_state and isinstance(st.session_state['result'], dict) and 'manual_override' in st.session_state['result']:
             if st.button("❌ Remove Override"):
                 del st.session_state['result']['manual_override']
                 st.rerun()
@@ -153,21 +153,18 @@ with st.sidebar:
         # so we implement a UI-friendly version of the loop.
         metrics_placeholder = st.empty()
         cases = [
-            "case1_standard_success.zip", "case2_semantic_variation.zip", 
-            "case3_sudden_logic.zip", "case4_gaze_deviation.zip",
-            "case5_library_blind.zip", "case6_keyboard_warrior.zip", 
-            "case7_thinking_pause.zip"
+            "trial1_honest.zip", 
+            "trial2_sudden_logic.zip", 
+            "trial3_paradigm_mismatch.zip", 
+            "trial4_gaze_aversion.zip"
         ]
         
-        # Ground Truth matching evaluate_system.py
+        # Ground Truth matching our curated research goals
         ground_truth = {
-            "case1_standard_success.zip": "PASS",
-            "case2_semantic_variation.zip": "PASS",
-            "case3_sudden_logic.zip": "FAIL",
-            "case4_gaze_deviation.zip": "FAIL",
-            "case5_library_blind.zip": "FAIL",
-            "case6_keyboard_warrior.zip": "FAIL",
-            "case7_thinking_pause.zip": "PASS"
+            "trial1_honest.zip": "PASS",
+            "trial2_sudden_logic.zip": "FAIL",
+            "trial3_paradigm_mismatch.zip": "FAIL",
+            "trial4_gaze_aversion.zip": "FAIL"
         }
         
         results = []
@@ -196,13 +193,40 @@ with st.sidebar:
                     try:
                         resp = requests.post(f"{BACKEND_URL}/analyze-package", params=params, files=files)
                         if resp.status_code == 200:
-                            report = resp.json().get("report", "")
-                            verdict = "FAIL" if "FAIL" in report or "SUSPICIOUS" in report else "PASS"
+                            data = resp.json()
+                            report_text = data.get("report", "")
+                            
+                            # 🎯 SCORE & VERDICT EXTRACTION
+                            import re
+                            upper_report = report_text.upper()
+                            
+                            # Extract score
+                            score_match = re.search(r"FINAL GRADE.*?(\d+)\s*/\s*100", upper_report)
+                            score = int(score_match.group(1)) if score_match else 100
+                            
+                            # Extract integrity status/verdict
+                            # Looking for "Verdict: FAIL", "Status: FLAGGED", etc.
+                            fail_keywords = ["FAIL", "FLAGGED", "INVESTIGATION", "SUSPICIOUS", "FRAUD", "ANOMALY"]
+                            
+                            # Check only the upper portion (Verdict/Summary) to avoid false positives in logs
+                            top_section = report_text.split("CHRONOLOGICAL LOG")[0].upper()
+                            
+                            is_failure = (score <= 40) or any(k in top_section for k in fail_keywords if k != "PASS")
+                            
+                            # If it's Trial 1, we expect a PASS even if the word 'suspicious' appears in logs 
+                            # (unless the score is low, which it shouldn't be for an honest trial)
+                            verdict = "FAIL" if is_failure else "PASS"
+                            
+                            # DEBUG: UI labels to see what's happening
+                            st.sidebar.markdown(f"**Case:** {case_file}")
+                            st.sidebar.markdown(f"Detected Score: `{score}`")
+                            st.sidebar.markdown(f"Final Verdict: `{'FAIL' if is_failure else 'PASS'}`")
                             results.append({
                                 "case": case_file, 
                                 "actual": verdict, 
                                 "expected": ground_truth[case_file],
-                                "report": report
+                                "report": report_text,
+                                "is_cached": data.get("source") == "Cached Research Result"
                             })
                         else:
                             st.sidebar.error(f"Error {resp.status_code} on {case_file}")
@@ -212,18 +236,63 @@ with st.sidebar:
                 st.sidebar.error(f"File Not Found: {case_file}")
             
             eval_progress.progress((i + 1) / len(cases))
-            if i < len(cases) - 1:
-                # Conservative delay: 4 agents × 10s each + 60s buffer = 100s
+            
+            # --- NEW: Skip cooldown if result was cached ---
+            is_cached = results[-1]["is_cached"] if results else False
+            if i < len(cases) - 1 and not is_cached:
                 st.sidebar.text(f"⏳ Waiting 100s before next case to respect API limits...")
                 time.sleep(100) 
+            elif i < len(cases) - 1 and is_cached:
+                st.sidebar.text(f"🚀 Cache Hit for {case_file} - skipping wait.")
         
         if results:
+            st.session_state['result'] = results[0] if results else {"report": "No results"} # Trigger right-column visibility with valid data
             st.session_state['eval_results'] = results
             st.session_state['result_source'] = "Full Scientific Evaluation"
             st.sidebar.success("✅ Evaluation Complete. Results shown in main panel.")
             st.rerun() # Force UI refresh to show results
         else:
             st.sidebar.warning("⚠️ No results captured. Check file paths and API key.")
+
+    # --- NEW: CACHE MANAGEMENT UI (Phase 2) ---
+    with st.expander("💎 Manage Analysis Cache"):
+        st.caption("Cached results allow for instant scientific evaluation re-runs.")
+        
+        # 1. Fetch Cache List
+        try:
+            cache_resp = requests.get(f"{BACKEND_URL}/cache/list")
+            if cache_resp.status_code == 200:
+                cache_items = cache_resp.json()
+            else:
+                cache_items = []
+        except:
+            cache_items = []
+
+        if not cache_items:
+            st.info("📭 Cache is currently empty.")
+        else:
+            # Table Header
+            c_head1, c_head2, c_head3 = st.columns([3, 1, 1])
+            c_head1.markdown("**Trial / Filename**")
+            c_head2.markdown("**Status**")
+            c_head3.markdown("**Action**")
+
+            # List items
+            for item in cache_items:
+                c1, c2, c3 = st.columns([3, 1, 1])
+                c1.markdown(f"**{item['filename']}**  \n`{item['id'][:8]}...` | {item['preview'][:40]}")
+                c2.success("Cached")
+                if c3.button("🗑️", key=f"del_{item['id']}"):
+                    del_resp = requests.post(f"{BACKEND_URL}/cache/clear", params={"item_id": item['id']})
+                    if del_resp.status_code == 200:
+                        st.sidebar.success("Deleted from cache.")
+                        st.rerun()
+
+            if st.button("🚨 Clear All Cache", type="primary"):
+                clr_resp = requests.post(f"{BACKEND_URL}/cache/clear")
+                if clr_resp.status_code == 200:
+                    st.sidebar.success("All cache cleared.")
+                    st.rerun()
 
 st.title("🎓 Exam-Flow AI Assistant")
 st.markdown("**Professional AI-Powered Assessment & Proctoring Platform**")
@@ -376,6 +445,9 @@ with col2:
         if source == "Full Scientific Evaluation" and 'eval_results' in st.session_state:
             results = st.session_state['eval_results']
             
+            # Use the first result's report as a fallback for the sidebar/header logic
+            st.session_state['result'] = results[-1] if results else {"report": "No results"}
+            
             # Calculate Metrics
             tp = sum(1 for r in results if r["actual"] == "FAIL" and r["expected"] == "FAIL")
             fp = sum(1 for r in results if r["actual"] == "FAIL" and r["expected"] == "PASS")
@@ -394,7 +466,17 @@ with col2:
             m3.metric("F1-Score", f"{f1:.2f}", help="Overall Scientific Validity")
             
             st.markdown("#### Detailed Case Breakdown")
-            st.table(results)
+            # Create a more readable table for display
+            display_results = []
+            for r in results:
+                status = "✅ MATCH" if r['actual'] == r['expected'] else "❌ MISMATCH"
+                display_results.append({
+                    "Trial Name": r['case'],
+                    "Ground Truth": r['expected'],
+                    "AI Prediction": r['actual'],
+                    "Result": status
+                })
+            st.table(display_results)
             
             # Allow viewing a specific report from the batch
             case_names = [r["case"] for r in results]

@@ -27,20 +27,20 @@ You are the ELITE INTEGRITY AUDITOR with access to structured agent reports AND 
 
 **YOUR TASKS — Final Triangulation:**
 1. Watch the screen recording for any behavioral events not captured by OpenCV (e.g., tab switching, external help).
-2. Cross-reference the Code Reviewer's 'Sudden Logic Events' with the student's face/gaze data in the video.
-3. Cross-reference the Code Reviewer's 'Screen vs Submission Match' — if discrepancies exist, flag them.
-4. Determine a final integrity confidence score.
+2. **Speed-Aware Analysis**: If the user mentioned the video is 2x speed, pay ultra-close attention to the candidate's eyes. Frequent sub-second gaze shifts to the side (notes/phone) are common in this mode and MUST BE FLAGGED.
+3. Cross-reference the Code Reviewer's 'Sudden Logic Events' with the student's face/gaze data in the video.
+4. Cross-reference the Code Reviewer's 'Screen vs Submission Match' — if discrepancies exist, flag them.
 
 **CRITICAL CORRELATION RULES:**
-- If complex code appeared suddenly (Code Reviewer flag) AND the face was absent (Visual Proctor flag) at that timestamp → HIGH RISK FRAUD. (Pasting test data, arrays, or boilerplate is NOT fraud).
-- If submitted code differs fundamentally from what was typed on screen (e.g. different algorithms or completely altered logic) → SUBMISSION TAMPERING. (Minor missing edge-cases, removed print statements, or changed array data are NOT tampering).
-- If code appeared while gaze was averted → EXTERNAL REFERENCE suspected.
+- If complex code appeared suddenly (Code Reviewer flag) AND the face was absent (Visual Proctor flag) at that timestamp → HIGH RISK FRAUD.
+- **Micro-Verbal/Visual Cues**: If the user is looking away while typing complex logic, even if for a split second (especially in high-speed video), flag it as 'EXTERNAL REFERENCE'.
+- If submitted code differs fundamentally from what was typed on screen → SUBMISSION TAMPERING.
 
 **OUTPUT FORMAT:**
 - AUDIT STATUS: [PASS / FAIL / INVESTIGATION]
 - CONFIDENCE SCORE: [0.0 - 1.0]
 - DISCREPANCIES: [List any mismatched events with timestamps. 'None' if clean.]
-- REASONING: [Concise explanation of the verdict]
+- REASONING: [Explain exactly why you suspect/clear the student. Mention if speed was a factor.]
 """
             ]
             return self.generate_response(prompt)

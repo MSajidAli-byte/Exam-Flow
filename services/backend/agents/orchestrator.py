@@ -47,39 +47,45 @@ class AgentOrchestrator:
                 print(f"⚠️ Could not upload video to Gemini: {e}")
                 gemini_video_file = None
 
-        # Step 2: Visual Proctor — interprets OpenCV behavioral flags via LLM
-        print("🚀 Agent A (Visual Proctor) starting analysis...")
-        visual_report = self.visual_proctor.run(video_data)
+        # Step 2: Visual Proctor
+        print("🚀 Agent A (Visual Proctor) starting multimodal analysis...")
+        visual_report = self.visual_proctor.run({
+            "cv_context": video_data.get("cv_context"),
+            "video_path": video_path,
+            "gemini_video_file": gemini_video_file
+        })
+        if "ERROR:" in visual_report: return visual_report # Stop early
 
+        # 1.5-Flash has better RPM, so we can reduce delay from 10s to 5s
         print("⏳ Rate limiting delay (10s)...")
         time.sleep(10)
 
-        # Step 3: Code Reviewer — reads submitted code AND watches screen recording
-        # Phase 2 superiority: Gemini cross-references what was SUBMITTED vs what was TYPED on screen
+        # Step 3: Code Reviewer
         print("🚀 Agent B (Code Reviewer) starting analysis...")
         code_report = self.code_reviewer.run({
             "source_code": source_code,
             "video_path": video_path,
-            "gemini_video_file": gemini_video_file,  # Pass uploaded file directly
+            "gemini_video_file": gemini_video_file,
             "rubric": f"{rubric}\n\nIDEAL SOLUTION CONTEXT (from RAG library):\n{ideal_context}"
         })
+        if "ERROR:" in code_report: return code_report # Stop early
 
         print("⏳ Rate limiting delay (10s)...")
         time.sleep(10)
 
-        # Step 4: Integrity Auditor — cross-references video screen events with code report
-        # This is the key Phase 2 feature: structured triangulation between all data sources
+        # Step 4: Integrity Auditor
         print("🔍 Agent C (Integrity Auditor) performing audit...")
         audit_report = self.integrity_auditor.run({
             "visual_report": visual_report,
             "code_report": code_report,
-            "gemini_video_file": gemini_video_file,  # Auditor also watches the screen
+            "gemini_video_file": gemini_video_file,
         })
+        if "ERROR:" in audit_report: return audit_report # Stop early
 
         print("⏳ Rate limiting delay (10s)...")
         time.sleep(10)
 
-        # Step 5: Final Grader — synthesizes all agent reports into one verdict
+        # Step 5: Final Grader
         print("🏆 Agent D (Final Grader) generating verdict...")
         final_report = self.final_grader.run({
             "visual_report": visual_report,

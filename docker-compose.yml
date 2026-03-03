@@ -23,6 +23,7 @@ services:
     environment:
       - BACKEND_URL=http://backend:8000
       - PHASE=${PHASE:-1}
+      - AGENTIC_MODE=${AGENTIC_MODE:-off}
     volumes:
       - ./services/frontend:/app
       - .:/project_root
