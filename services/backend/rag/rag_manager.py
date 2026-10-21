@@ -1,7 +1,32 @@
 import chromadb
-from chromadb.utils import embedding_functions
+from chromadb.api.types import Documents, EmbeddingFunction, Embeddings
+import numpy as np
 import os
 from typing import List, Dict, Any
+
+class GeminiEmbeddingFunction(EmbeddingFunction[Documents]):
+    """Custom ChromaDB Embedding Function using Google Generative AI embeddings."""
+    def __init__(self, api_key: str, model_name: str = "models/gemini-embedding-001"):
+        import google.generativeai as genai
+        self.api_key = api_key
+        self.model_name = model_name
+        genai.configure(api_key=self.api_key)
+        self._genai = genai
+
+    def __call__(self, input: Documents) -> Embeddings:
+        embeddings = []
+        for text in input:
+            res = self._genai.embed_content(
+                model=self.model_name,
+                content=text,
+                task_type="RETRIEVAL_DOCUMENT"
+            )
+            embeddings.append(np.array(res["embedding"], dtype=np.float32))
+        return embeddings
+
+    @staticmethod
+    def name() -> str:
+        return "custom_gemini_embedding"
 
 class RagManager:
     """Manages the Ideal Answer Library using ChromaDB."""
@@ -9,8 +34,8 @@ class RagManager:
         self.persist_directory = persist_directory
         self.api_key = os.getenv("GOOGLE_API_KEY")
         
-        # Use Google Embeddings to avoid local model download timeouts
-        self.embedding_fn = embedding_functions.GoogleGenerativeAiEmbeddingFunction(
+        # Use Custom Google Embeddings to avoid local model download timeouts & ChromaDB client_options incompatibility
+        self.embedding_fn = GeminiEmbeddingFunction(
             api_key=self.api_key,
             model_name="models/gemini-embedding-001"
         )
