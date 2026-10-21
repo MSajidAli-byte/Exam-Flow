@@ -7,16 +7,15 @@ class BaseAgent:
     """Base class for all Phase 2 agents with intelligent multi-model fallback."""
     
     # Priority order based on ACTUAL available models and quota limits
-    # Strategy: Use stable 2.5/2.0 models, avoid experimental variants
     MODEL_FALLBACK_ORDER = [
-        'models/gemini-1.5-flash',
-        'models/gemini-1.5-flash-latest',
-        'models/gemini-2.0-flash-exp',
-        'models/gemini-2.0-flash-001',
-        'models/gemini-2.0-flash-lite-001',
+        'models/gemini-flash-lite-latest',
+        'models/gemini-3.5-flash-lite',
+        'models/gemini-3.1-flash-lite',
+        'models/gemini-3.8-flash',
+        'models/gemini-3.5-flash',
+        'models/gemini-flash-latest',
         'models/gemini-2.5-flash',
-        'models/gemini-2.5-flash-lite',
-        'models/gemini-3-flash-preview'
+        'models/gemini-2.5-flash-lite'
     ]
     
     def __init__(self, model_name: str = None):
