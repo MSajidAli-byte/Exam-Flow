@@ -116,8 +116,11 @@ class RagManager:
                 print(f"⚠️ Skipping cache for report containing errors (Hash: {file_hash})")
                 return
 
+            # Pass explicit dummy vector to prevent ChromaDB DefaultEmbeddingFunction ONNX model download/inference timeouts
+            dummy_vector = [0.0] * 384
             self.cache_collection.upsert(
                 ids=[file_hash],
+                embeddings=[dummy_vector],
                 documents=[f"Report for hash {file_hash}"],
                 metadatas=[{"report_data": json.dumps(report_data)}]
             )
