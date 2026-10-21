@@ -272,16 +272,16 @@ with st.sidebar:
             st.info("📭 Cache is currently empty.")
         else:
             # Table Header
-            c_head1, c_head2, c_head3 = st.columns([3, 1, 1])
-            c_head1.markdown("**Trial / Filename**")
+            c_head1, c_head2, c_head3 = st.columns([5, 3, 2])
+            c_head1.markdown("**Trial / File**")
             c_head2.markdown("**Status**")
             c_head3.markdown("**Action**")
 
             # List items
             for item in cache_items:
-                c1, c2, c3 = st.columns([3, 1, 1])
-                c1.markdown(f"**{item['filename']}**  \n`{item['id'][:8]}...` | {item['preview'][:40]}")
-                c2.success("Cached")
+                c1, c2, c3 = st.columns([5, 3, 2])
+                c1.markdown(f"**{item['filename']}**  \n`{item['id'][:8]}...`")
+                c2.caption("🟢 Cached")
                 if c3.button("🗑️", key=f"del_{item['id']}"):
                     del_resp = requests.post(f"{BACKEND_URL}/cache/clear", params={"item_id": item['id']})
                     if del_resp.status_code == 200:
