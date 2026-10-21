@@ -6,6 +6,21 @@ Two phases. One codebase. Use the scripts below to switch between them.
 
 ## ⚡ Quick Start
 
+### 🔑 Google Gemini API Key Setup (Required First Step)
+> [!IMPORTANT]
+> **Before running the application with your API key, you MUST first enable the Gemini API in the Google Cloud Console:**
+> 1. Go to the [Google Cloud Console Generative Language API](https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com) and click **Enable**.
+> 2. Create or copy your Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
+> 3. Add your key to the `.env` file in the project root:
+>    ```env
+>    GOOGLE_API_KEY=your_api_key_here
+>    PHASE=1
+>    AGENTIC_MODE=on
+>    ```
+> *(Without enabling the API in Google Cloud Console, model requests and file uploads will fail with `API_KEY_INVALID` or `400/403` status errors).*
+
+---
+
 ### Upgrade to Phase 2 (Agentic + RAG)
 
 **Windows:**

@@ -63,8 +63,8 @@ You are the SENIOR CODE REVIEWER AGENT. You have access to BOTH the student's su
                     if video_file_to_use.state.name != "ACTIVE":
                         return "ERROR: Video processing failed. Cannot extract code."
                 except Exception as e:
-                    print(f"❌ Video-only review failed: {e}")
-                    return "ERROR: Could not perform video-based code review."
+                    print(f"❌ Video-only review failed to upload to Files API: {e}")
+                    video_file_to_use = None
 
             if video_file_to_use:
                 prompt = [

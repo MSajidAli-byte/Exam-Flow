@@ -160,6 +160,20 @@ async def analyze_video_v2(
         }
         rubric = rubrics.get(assessment_type, rubrics["General"])
 
+    # Hash-based caching for single video
+    import hashlib
+    hash_obj = hashlib.md5()
+    hash_obj.update(content)
+    hash_obj.update(str(rubric).encode())
+    hash_obj.update(str(enable_proctoring).encode())
+    file_hash = hash_obj.hexdigest()
+
+    cached_result = rag_manager.get_cached_report(file_hash)
+    if cached_result:
+        print(f"💎 CACHE HIT for video {file.filename} ({file_hash})")
+        cached_result["source"] = "Cached Research Result"
+        return cached_result
+
     # Run Analysis
     try:
         behavioral_flags = []
@@ -168,15 +182,23 @@ async def analyze_video_v2(
         
         # Grade with CV flags if enabled, otherwise just grade the video
         report = await grader.grade_video(file_path, rubric, behavioral_flags=behavioral_flags if enable_proctoring else None)
+        
+        response_data = {
+            "type": assessment_type,
+            "report": report,
+            "behavioral_flags": behavioral_flags,
+            "proctoring_enabled": enable_proctoring,
+            "filename": file.filename,
+            "source": "Agentic Analysis (Fresh)"
+        }
+        
+        # Save to cache if valid and not an empty/error result
+        if report and "ERROR:" not in report and "empty workspace" not in report.lower() and "null codebase" not in report.lower():
+            rag_manager.cache_report(file_hash, response_data)
+            
+        return response_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-    return {
-        "type": assessment_type,
-        "report": report,
-        "behavioral_flags": behavioral_flags,
-        "proctoring_enabled": enable_proctoring
-    }
 
 @app.post("/analyze-package")
 async def analyze_package(
