@@ -7,6 +7,15 @@ Video Demo/demo video_Exam-Flow.mp4
 *.mkv
 *.flv
 
+# Allow trial media files for replication
+!trials/**
+
+# Papers and Presentations (Excluded from Git as requested)
+*.pdf
+*.pptx
+Exam-Flow_Conference_Presentation_Final_v1.3.pptx
+examflow_conference_v1.pdf
+
 # Python
 __pycache__/
 *.py[cod]
