@@ -53,6 +53,14 @@ async def list_cache():
     """Lists all cached analyses."""
     return rag_manager.list_cache()
 
+@app.get("/cache/get")
+async def get_cache_item(item_id: str):
+    """Retrieves a specific cached report by its hash ID."""
+    cached = rag_manager.get_cached_report(item_id)
+    if not cached:
+        raise HTTPException(status_code=404, detail="Cache item not found")
+    return cached
+
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,

@@ -272,17 +272,30 @@ with st.sidebar:
             st.info("📭 Cache is currently empty.")
         else:
             # Table Header
-            c_head1, c_head2, c_head3 = st.columns([5, 3, 2])
+            c_head1, c_head2, c_head3, c_head4 = st.columns([5, 3, 2, 2])
             c_head1.markdown("**Trial / File**")
             c_head2.markdown("**Status**")
-            c_head3.markdown("**Action**")
+            c_head3.markdown("**View**")
+            c_head4.markdown("**Del**")
 
             # List items
             for item in cache_items:
-                c1, c2, c3 = st.columns([5, 3, 2])
+                c1, c2, c3, c4 = st.columns([5, 3, 2, 2])
                 c1.markdown(f"**{item['filename']}**  \n`{item['id'][:8]}...`")
                 c2.caption("🟢 Cached")
-                if c3.button("🗑️", key=f"del_{item['id']}"):
+                if c3.button("👁️", key=f"view_{item['id']}", help="Retrieve and display this cached report"):
+                    try:
+                        view_resp = requests.get(f"{BACKEND_URL}/cache/get", params={"item_id": item['id']})
+                        if view_resp.status_code == 200:
+                            data = view_resp.json()
+                            st.session_state['result'] = data
+                            st.session_state['result_source'] = f"Cached ({item['filename']})"
+                            st.rerun()
+                        else:
+                            st.sidebar.error("Failed to load cached report.")
+                    except Exception as e:
+                        st.sidebar.error(f"Error loading cache: {e}")
+                if c4.button("🗑️", key=f"del_{item['id']}", help="Delete from cache"):
                     del_resp = requests.post(f"{BACKEND_URL}/cache/clear", params={"item_id": item['id']})
                     if del_resp.status_code == 200:
                         st.sidebar.success("Deleted from cache.")
